@@ -1,5 +1,6 @@
 import java.sql.SQLOutput;
 import java.time.LocalDate;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -107,8 +108,7 @@ public class Main {
                         Ordenacao ordem = new Ordenacao(); // passando a quantidade de arquivo que o usario quer usar para intercalar
                         ordem.ordenar(quantArq);
                         double fim = new Date().getTime();
-                        double tempoExecucao = (inicio - fim) / 1000.0;
-
+                        double tempoExecucao = (fim - inicio) / 1000.0;
 
                         System.out.println("A ordenação com " + quantArq + " arquivos durou " + tempoExecucao + "s");
 
