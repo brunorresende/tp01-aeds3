@@ -104,9 +104,11 @@ public class Main {
                     case 5: { // Ordenação
                         System.out.println("Digite a quantidade de arquivos que voce quer utilizar entre 3-5");
                         int quantArq = sc.nextInt();
+                        System.out.println("Agora digite a quantidade de registros por blocos");
+                        int quantBlocos = sc.nextInt();
                         double inicio = new Date().getTime();
                         Ordenacao ordem = new Ordenacao(); // passando a quantidade de arquivo que o usario quer usar para intercalar
-                        ordem.ordenar(quantArq);
+                        ordem.ordenar(quantArq, quantBlocos);
                         double fim = new Date().getTime();
                         double tempoExecucao = (fim - inicio) / 1000.0;
 
