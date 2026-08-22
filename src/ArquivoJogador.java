@@ -6,6 +6,7 @@ import java.util.List;
 
 public class ArquivoJogador {
     private String NOME_ARQUIVO = "jogadores.db";
+    private long ponteiroLeituraOrdenacao = 4; // começa depois do cabeçalho
     private RandomAccessFile raf;
 
     // marcadores de lápide
@@ -225,6 +226,32 @@ public class ArquivoJogador {
         System.out.println("Erro ao atualizar: " + e.getMessage());
     }
     return false;
+    }
+    public void resetarLeituraOrdenacao() {
+        ponteiroLeituraOrdenacao = 4;
+    }
+
+    public Jogador proximoAtivo() throws IOException {
+        raf.seek(ponteiroLeituraOrdenacao); // vai pra onde parou da ultima vez
+
+        while (raf.getFilePointer() < raf.length()) {
+            byte lapide = raf.readByte();
+            int tamanhoRegistro = raf.readInt();
+
+            byte[] buffer = new byte[tamanhoRegistro];
+            raf.readFully(buffer);
+
+            ponteiroLeituraOrdenacao = raf.getFilePointer(); // guarda onde ficou
+
+            if (lapide == LAPIDE_ATIVO) {
+                Jogador j = new Jogador();
+                j.fromByteArray(buffer);
+                return j; // achou um ativo, devolve
+            }
+            // se foi excluído, o while continua e tenta o próximo
+        }
+
+        return null; // chegou ao fim do arquivo
     }
 
     public void fechar() throws IOException {
