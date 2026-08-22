@@ -108,7 +108,7 @@ public class Main {
                         int quantBlocos = sc.nextInt();
                         double inicio = new Date().getTime();
                         Ordenacao ordem = new Ordenacao(arquivo); // passando a quantidade de arquivo que o usario quer usar para intercalar
-                        ordem.ordenar(quantArq, quantBlocos);
+                        ordem.Ordenar(quantArq, quantBlocos);
                         double fim = new Date().getTime();
                         double tempoExecucao = (fim - inicio) / 1000.0;
 

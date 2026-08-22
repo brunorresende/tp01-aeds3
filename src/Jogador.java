@@ -3,7 +3,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Jogador {
+public class Jogador implements Comparable<Jogador> {
     private int athleteId; // ID
     private String firstName; // Primeiro Nome
     private List<String> slug; // Nome e Sobrenome
@@ -142,5 +142,9 @@ public class Jogador {
     public String toString() {
         return String.format("ID=%d | Nome=%-15s | Posicao=%s | Data=%s | Slug=%s",
                 athleteId, firstName, positionAbbreviation, timestamp, slug);
+    }
+    @Override
+    public int compareTo(Jogador outro) { // tornando o jogador comparavel
+        return Integer.compare(this.athleteId, outro.athleteId);
     }
 }
