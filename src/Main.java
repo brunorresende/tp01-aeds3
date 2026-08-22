@@ -1,3 +1,4 @@
+import java.sql.SQLOutput;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +25,7 @@ public class Main {
                 System.out.println("2 - Criar novo registro");
                 System.out.println("3 - Atualizar registro");
                 System.out.println("4 - Deletar registro");
+                System.out.println("5 - Ordenar arquivo");
                 System.out.println("0 - Sair");
                 System.out.print("Escolha uma opção: ");
 
@@ -96,6 +98,22 @@ public class Main {
                             System.out.println("Erro: ID não encontrado ou já excluído.");
                         }
                         break;
+                    }
+
+                    case 5: { // Ordenação
+                        System.out.println("Digite a quantidade de arquivos que voce quer utilizar entre 3-5");
+                        int quantArq = sc.nextInt();
+                        double inicio = new Date().getTime();
+                        Ordenacao ordem = new Ordenacao(); // passando a quantidade de arquivo que o usario quer usar para intercalar
+                        ordem.ordenar(quantArq);
+                        double fim = new Date().getTime();
+                        double tempoExecucao = (inicio - fim) / 1000.0;
+
+
+                        System.out.println("A ordenação com " + quantArq + " arquivos durou " + tempoExecucao + "s");
+
+                        break;
+
                     }
                     case 0: {
                         System.out.println("Encerrando aplicação...");
