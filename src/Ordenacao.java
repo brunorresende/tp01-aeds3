@@ -65,7 +65,6 @@ public class Ordenacao {
         for (int i = 0; i < runs.size(); i++) {
             grupos.get(i % quantArq).add(runs.get(i));
         }
-
         return grupos;
     }
 

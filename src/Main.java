@@ -115,7 +115,6 @@ public class Main {
                         System.out.println("A ordenação com " + quantArq + " arquivos durou " + tempoExecucao + "s");
 
                         break;
-
                     }
                     case 0: {
                         System.out.println("Encerrando aplicação...");
