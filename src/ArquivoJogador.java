@@ -93,23 +93,26 @@ public class ArquivoJogador {
     // CREATE
     public boolean create(Jogador novoJogador) {
         try {
-            // Atualiza o cabeçalho se o novo ID for o maior
+            // leitura do (byte 0) para verificar o maior ID existente
             raf.seek(0);
             int ultimoId = raf.readInt();
 
+            // atualiza o cabeçalho no byte zero se o ID atual for o maior
             if (novoJogador.getAthleteId() > ultimoId) {
                 raf.seek(0);
                 raf.writeInt(novoJogador.getAthleteId());
             }
 
-            // escreve o registro no final do arquivo
-            raf.seek(raf.length());
-            byte[] bytes = novoJogador.toByteArray();
+            raf.seek(raf.length()); // posiciona o ponteiro no fim do arquivo para escrita
+            byte[] bytes = novoJogador.toByteArray(); // serializa o objeto em um array de bytes
 
+            //escreve o padrão: lapide + tamanho + dados
             raf.writeByte(LAPIDE_ATIVO);
             raf.writeInt(bytes.length);
             raf.write(bytes);
+
             return true;
+
         } catch (Exception e) {
             System.out.println("Erro ao criar registro: " + e.getMessage());
         }
@@ -117,71 +120,78 @@ public class ArquivoJogador {
     }
 
 
-    //  READ
+    //  READ (busca sequencial)
     public Jogador read(int idProcurado) {
         try {
-            raf.seek(4); // Posiciona após os 4 bytes do cabeçalho
+            raf.seek(4); // Posiciona após os 4 bytes do cabeçalho com o maior ID
 
+            //Percorre o arquivo registro por registro até o fim do arquivo
             while (raf.getFilePointer() < raf.length()) {
                 byte lapide = raf.readByte();
                 int tamanhoRegistro = raf.readInt();
 
                 if (lapide == LAPIDE_ATIVO) {
+                    //aloca o buffer e le todos os bytes do registro
                     byte[] buffer = new byte[tamanhoRegistro];
-                    raf.readFully(buffer); // Lê os bytes e avança o ponteiro automaticamente
+                    raf.readFully(buffer);
 
+                    // desserializa para reconstruir o objeto
                     Jogador jogador = new Jogador();
                     jogador.fromByteArray(buffer);
 
+                    //se for o registro procurado, interrompe a busca e retorna o objeto
                     if (jogador.getAthleteId() == idProcurado) {
                         return jogador;
                     }
-                    // Se o ID não for o procurado, não fazemos nada aqui.
-                    // O readFully já avançou o ponteiro até o início do próximo registro.
+                    // Se o ID não for o procurado, o ponteiro já está pronto no próximo registro
 
                 } else {
-                    // Este 'else' pertence ao 'if (lapide == LAPIDE_ATIVO)'.
-                    // Se o registro foi excluído ('*'), aí sim usamos skipBytes:
+                    // registro marcado como excluído, avança o ponteiro sem carregar os dados em RAM
                     raf.skipBytes(tamanhoRegistro);
                 }
             }
         } catch (Exception e) {
             System.out.println("Erro ao ler registro: " + e.getMessage());
         }
-        return null;
+        return null; // retorna null se alcançar o final do arquivo sem localizar o ID
     }
 
 
     //  DELETE
     public boolean delete(int idProcurado) {
         try {
-            raf.seek(4); // Pula os 4 bytes do cabeçalho
+            raf.seek(4); // Posiciona após os 4 bytes do cabeçalho com o maior ID
 
+            //Percorre o arquivo registro por registro até o fim do arquivo
             while (raf.getFilePointer() < raf.length()) {
+                //salva a posicao atual para que o sistema volte a esse ponto depois
                 long posRegistro = raf.getFilePointer();
                 byte lapide = raf.readByte();
                 int tamanhoRegistro = raf.readInt();
 
                 if (lapide == LAPIDE_ATIVO) {
+                    //lê o payload do registro para identificar o ID
                     byte[] buffer = new byte[tamanhoRegistro];
                     raf.readFully(buffer);
 
                     Jogador j = new Jogador();
                     j.fromByteArray(buffer);
 
+                    // se for o ID procurado, volta até a lápide e aplica o marcador de exclusão
                     if (j.getAthleteId() == idProcurado) {
-                        raf.seek(posRegistro); // volta para a posição da lapide
+                        raf.seek(posRegistro); // reposiciona o ponteiro no byte da lápide
                         raf.writeByte(LAPIDE_EXCLUIDO); // marca com '*'
                         return true;
                     }
                 } else {
+                    // salta os bytes de registros já excluídos sem alocar RAM
                     raf.skipBytes(tamanhoRegistro);
                 }
             }
         } catch (Exception e) {
             System.out.println("Erro ao deletar: " + e.getMessage());
         }
-        return false;
+        return false; // retorna false se o ID não for encontrado
     }
 
     //UPDATE
