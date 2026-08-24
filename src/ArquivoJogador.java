@@ -23,50 +23,53 @@ public class ArquivoJogador {
     public void realizarCargaCSV(String caminhoCSV){
         try {
 
-            raf.setLength(0);
 
             BufferedReader br = new BufferedReader(new FileReader(caminhoCSV));
             String linha = br.readLine(); // pula o cabeçalho do CSV
 
 
 
-            // 4 primeiros bytes para o último ID
+            // salva os 4 primeiros bytes para armazenar o último ID no arquivo
             raf.seek(0);
             raf.writeInt(0);
 
             int ultimoID = 0;
 
             while ((linha = br.readLine()) != null) {
-                // preserva colunas vazias
+                // o parâmetro -1 garante a leitura de colunas vazias no final da linha
                 String[] dados = linha.split(",", -1);
 
+                //  ID
                 int id = Integer.parseInt(dados[0]);
-                String nome = dados[1];
 
-                // slug separado por hífen "-"
-                List<String> listaSlug = new ArrayList<>();
+                //  Nome
+                String nome = dados[1]; //Salva o nome
+
+                //  Slug
+                List<String> listaSlug = new ArrayList<>(); //utilizando lista
                 if (!dados[2].isEmpty()) {
-                    listaSlug = Arrays.asList(dados[2].split("-"));
+                    listaSlug = Arrays.asList(dados[2].split("-")); //strings separado por hífen "-"
                 }
 
+                //  Posição
                 String posicao = dados[3];
 
-                // salva a data descartando o horário
+                //  Data (formato ISO (AAAA-MM-DD))
                 LocalDate data = null;
                 if (!dados[4].isEmpty()) {
-                    String apenasData = dados[4].split(" ")[0];
+                    String apenasData = dados[4].split(" ")[0]; // descartando componente de hora
                     data = LocalDate.parse(apenasData);
                 }
 
-                // instancia e serializa o objeto
+                // serializa o objeto em array de bytes
                 Jogador jogador = new Jogador(id, nome, listaSlug, posicao, data);
                 byte[] vetorBytes = jogador.toByteArray();
 
 
-                // ESCRITA DO REGISTRO
-                raf.writeByte(LAPIDE_ATIVO);    // lápide
-                raf.writeInt(vetorBytes.length);    // indicador de tamanho em bytes
-                raf.write(vetorBytes);  // vetor de bytes do objeto
+                // gravação do registro
+                raf.writeByte(LAPIDE_ATIVO);    // lápide (1B)
+                raf.writeInt(vetorBytes.length);    // indicador de tamanho em bytes (4B)
+                raf.write(vetorBytes);  // vetor de bytes do objeto (NB)
 
                 if (id > ultimoID) {
                     ultimoID = id;
@@ -74,7 +77,7 @@ public class ArquivoJogador {
             }
             br.close();
 
-            // volta ao início do arquivo para gravar o último ID no cabeçalho
+            // atualiza o cabeçalho no byte zero com o maior ID encontrado
             raf.seek(0);
             raf.writeInt(ultimoID);
 
