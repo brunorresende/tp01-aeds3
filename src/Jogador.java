@@ -1,5 +1,6 @@
 import java.io.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,13 +76,13 @@ public class Jogador implements Comparable<Jogador> {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
 
-        //ID
+        //  ID (campo int)
         dos.writeInt(athleteId);
 
-        //Nome
+        //  Nome (String de tamanho variavel)
         dos.writeUTF(firstName);
 
-        //Slug (nome completo)
+        //Slug (nome completo) - (Lista de valores com separador)
         if (slug != null) {
             dos.writeInt(slug.size()); // salva a quantidade de itens na lista
             for (String item : slug) {
@@ -91,7 +92,7 @@ public class Jogador implements Comparable<Jogador> {
             dos.writeInt(0);
         }
 
-        //Posicao
+        //  Posicao (String de tamanho fixo)
         String pos = (positionAbbreviation != null) ? positionAbbreviation : "";
         while (pos.length() < 2) {
             pos += " "; // metodo para garantir que strings vazias ou de 1 caractere fiquem com 2 caracteres
@@ -101,7 +102,7 @@ public class Jogador implements Comparable<Jogador> {
         }
         dos.writeChars(pos);
 
-        //Data
+        //  Data
         long dias = (timestamp != null) ? timestamp.toEpochDay() : 0;
         dos.writeLong(dias);
 
@@ -136,12 +137,14 @@ public class Jogador implements Comparable<Jogador> {
         long dias = dis.readLong();
         this.timestamp = (dias != 0) ? LocalDate.ofEpochDay(dias) : null;
     }
-
-
+    //formatação da data para exibir
+    private static final DateTimeFormatter formatoExibicao = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     @Override
     public String toString() {
+        //adiciona a data formatada (DD/MM/AAAA)
+        String dataFormatada = (timestamp != null) ? timestamp.format(formatoExibicao) : "N/A";
         return String.format("ID=%d | Nome=%-15s | Posicao=%s | Data=%s | Slug=%s",
-                athleteId, firstName, positionAbbreviation, timestamp, slug);
+                athleteId, firstName, positionAbbreviation, dataFormatada, slug);
     }
     @Override
     public int compareTo(Jogador outro) { // tornando o jogador comparavel

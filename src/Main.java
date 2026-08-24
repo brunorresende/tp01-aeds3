@@ -15,7 +15,6 @@ public class Main {
             ArquivoJogador arquivo = new ArquivoJogador();
 
 
-
             arquivo.realizarCargaCSV("players-selected-columns 2.csv");
 
             boolean rodando = true;
@@ -34,7 +33,7 @@ public class Main {
                 sc.nextLine(); // limpa o buffer
 
                 switch (opcao) {
-                    case 1: { // READ
+                    case 1: { // Read
                         System.out.print("\nDigite o ID do jogador: ");
                         int id = sc.nextInt();
                         sc.nextLine();
@@ -47,7 +46,7 @@ public class Main {
                         }
                         break;
                     }
-                    case 2: { // CREATE
+                    case 2: { // Create
                         System.out.println("\nNOVO CADASTRO");
                         System.out.print("Digite o ID do novo jogador: ");
                         int id = sc.nextInt();
@@ -63,7 +62,7 @@ public class Main {
                         }
                         break;
                     }
-                    case 3: { // UPDATE
+                    case 3: { // Update
                         System.out.println("\nATUALIZAR REGISTRO");
                         System.out.print("Digite o ID do jogador a ser atualizado: ");
                         int id = sc.nextInt();
@@ -86,7 +85,7 @@ public class Main {
                         }
                         break;
                     }
-                    case 4: { // DELETE
+                    case 4: { // Delete
                         System.out.println("\nEXCLUIR REGISTRO");
                         System.out.print("Digite o ID do jogador a ser deletado: ");
                         int id = sc.nextInt();
