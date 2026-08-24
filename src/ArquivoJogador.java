@@ -197,10 +197,10 @@ public class ArquivoJogador {
     //UPDATE
     public boolean update(Jogador novoJogador){
         try {
-            raf.seek(4);
+            raf.seek(4); //Posiciona após os 4 bytes do cabeçalho com o maior ID
 
             while (raf.getFilePointer() < raf.length()) {
-                long posRegistro = raf.getFilePointer();
+                long posRegistro = raf.getFilePointer(); // Guarda início do registro
                 byte lapide = raf.readByte();
                 int tamanhoRegistro = raf.readInt();
 
@@ -214,17 +214,17 @@ public class ArquivoJogador {
                     if (j.getAthleteId() == novoJogador.getAthleteId()) {
                         byte[] novosBytes = novoJogador.toByteArray();
 
+                        //se coube no espaço original: sobrescreve dados mantendo o indicador de tamanho original
                         if (novosBytes.length <= tamanhoRegistro) {
-                            // coube no espaço original: sobrescreve dados mantendo o indicador de tamanho original
                             raf.seek(posRegistro + 5); // pula lapide e tamanho
                             raf.write(novosBytes);
 
                         } else {
-                            // ficou maior: marca o atual como deletado e insere no fim do arquivo
+                            // novo registro é maior: marca o atual como deletado e insere no fim do arquivo
                             raf.seek(posRegistro);
-                            raf.writeByte(LAPIDE_EXCLUIDO);
+                            raf.writeByte(LAPIDE_EXCLUIDO); //"deleta" o registro atual
 
-                            raf.seek(raf.length());
+                            raf.seek(raf.length()); // move para o final do arquivo
                             raf.writeByte(LAPIDE_ATIVO);
                             raf.writeInt(novosBytes.length);
                             raf.write(novosBytes);
@@ -232,14 +232,16 @@ public class ArquivoJogador {
                         return true;
                     }
                 } else {
-                    raf.skipBytes(tamanhoRegistro);
+                    raf.skipBytes(tamanhoRegistro); // pula registro excluído
                 }
             }
         } catch (Exception e) {
         System.out.println("Erro ao atualizar: " + e.getMessage());
+        }
+        return false;
     }
-    return false;
-    }
+
+    // reseta o ponteiro para o inicio dos dados
     public void resetarLeituraOrdenacao() {
         ponteiroLeituraOrdenacao = 4;
     }
