@@ -15,17 +15,16 @@ public class Main {
             ArquivoJogador arquivo = new ArquivoJogador();
 
 
-            arquivo.realizarCargaCSV("players-selected-columns 2.csv");
-
             boolean rodando = true;
 
             while (rodando) {
                 System.out.println("    MENU DE OPÇÕES  ");
-                System.out.println("1 - Ler registro por ID");
-                System.out.println("2 - Criar novo registro");
-                System.out.println("3 - Atualizar registro");
-                System.out.println("4 - Deletar registro");
-                System.out.println("5 - Ordenar arquivo");
+                System.out.println("1 - Carregar base de dados");
+                System.out.println("2 - Ler registro por ID");
+                System.out.println("3 - Criar novo registro");
+                System.out.println("4 - Atualizar registro");
+                System.out.println("5 - Deletar registro");
+                System.out.println("6 - Ordenar arquivo");
                 System.out.println("0 - Sair");
                 System.out.print("Escolha uma opção: ");
 
@@ -33,7 +32,19 @@ public class Main {
                 sc.nextLine(); // limpa o buffer
 
                 switch (opcao) {
-                    case 1: { // Read
+                    case 1: { // Carregar a base de dados
+                        System.out.print("\nIsso vai apagar todos os dados atuais do arquivo e recarregar do CSV. Confirma? (s/n): ");
+                        String confirma = sc.nextLine().trim();
+
+                        if (confirma.equalsIgnoreCase("s")) {
+                            arquivo.realizarCargaCSV("players-selected-columns 2.csv"); //Carga da base de dados
+                            System.out.println("Base de dados carregada com sucesso!");
+                        } else {
+                            System.out.println("Carga cancelada.");
+                        }
+                        break;
+                    }
+                    case 2: { // Read
                         System.out.print("\nDigite o ID do jogador: ");
                         int id = sc.nextInt();
                         sc.nextLine();
@@ -46,7 +57,7 @@ public class Main {
                         }
                         break;
                     }
-                    case 2: { // Create
+                    case 3: { // Create
                         System.out.println("\nNOVO CADASTRO");
 
                         Jogador novo = lerDadosDoTeclado(sc); //chama funcao para preencher os dados manualmente
@@ -60,7 +71,7 @@ public class Main {
                         }
                         break;
                     }
-                    case 3: { // Update
+                    case 4: { // Update
                         System.out.println("\nATUALIZAR REGISTRO");
                         System.out.print("Digite o ID do jogador a ser atualizado: ");
                         int id = sc.nextInt();
@@ -86,7 +97,7 @@ public class Main {
                         }
                         break;
                     }
-                    case 4: { // Delete
+                    case 5: { // Delete
                         System.out.println("\nEXCLUIR REGISTRO");
                         System.out.print("Digite o ID do jogador a ser deletado: ");
                         int id = sc.nextInt();
@@ -101,7 +112,7 @@ public class Main {
                         break;
                     }
 
-                    case 5: { // Ordenação
+                    case 6: { // Ordenação
                         System.out.println("Digite a quantidade de arquivos que voce quer utilizar entre 3-5");
                         int quantArq = sc.nextInt();
                         System.out.println("Agora digite a quantidade de registros por blocos");

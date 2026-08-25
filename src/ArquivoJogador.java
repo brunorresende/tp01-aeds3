@@ -23,11 +23,10 @@ public class ArquivoJogador {
     public void realizarCargaCSV(String caminhoCSV){
         try {
 
+            raf.setLength(0); // reinicia a base de dados
 
             BufferedReader br = new BufferedReader(new FileReader(caminhoCSV));
             String linha = br.readLine(); // pula o cabeçalho do CSV
-
-
 
             // salva os 4 primeiros bytes para armazenar o último ID no arquivo
             raf.seek(0);
