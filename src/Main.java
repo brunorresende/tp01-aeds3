@@ -48,15 +48,13 @@ public class Main {
                     }
                     case 2: { // Create
                         System.out.println("\nNOVO CADASTRO");
-                        System.out.print("Digite o ID do novo jogador: ");
-                        int id = sc.nextInt();
-                        sc.nextLine();
 
-                        Jogador novo = lerDadosDoTeclado(sc, id);
+                        Jogador novo = lerDadosDoTeclado(sc); //chama funcao para preencher os dados manualmente
+
                         boolean sucesso = arquivo.create(novo);
 
                         if (sucesso) {
-                            System.out.println("Jogador cadastrado com sucesso!");
+                            System.out.println("Novo jogador com ID " + novo.getAthleteId() + "cadastrado com sucesso!");
                         } else {
                             System.out.println("Erro ao cadastrar jogador.");
                         }
@@ -68,15 +66,18 @@ public class Main {
                         int id = sc.nextInt();
                         sc.nextLine();
 
-                        Jogador existente = arquivo.read(id);
+                        Jogador existente = arquivo.read(id); //busca o jogador primeiro
                         if (existente == null) {
                             System.out.println("Jogador com ID " + id + " não foi encontrado.");
                         } else {
                             System.out.println("Dados atuais: " + existente);
                             System.out.println("\nInforme os novos dados:");
-                            Jogador atualizado = lerDadosDoTeclado(sc, id);
+                            Jogador atualizado = lerDadosDoTeclado(sc); //chama funcao para preencher os dados manualmente
 
+                            //reatribui manualmente o id correto para sobrescrever o que veio da funcao
+                            atualizado.setAthleteId(id);
                             boolean sucesso = arquivo.update(atualizado);
+
                             if (sucesso) {
                                 System.out.println("Registro atualizado com sucesso!");
                             } else {
@@ -115,6 +116,7 @@ public class Main {
 
                         break;
                     }
+
                     case 0: {
                         System.out.println("Encerrando aplicação...");
                         rodando = false;
@@ -136,13 +138,16 @@ public class Main {
     }
 
     // metodo auxiliar para a leitura no terminal
-    private static Jogador lerDadosDoTeclado(Scanner sc, int id) {
+    private static Jogador lerDadosDoTeclado(Scanner sc) {
+        //leitura do jogador
         System.out.print("Nome: ");
         String nome = sc.nextLine().trim();
 
+        //leitura da posição
         System.out.print("Posição (ex: G, D, M, F): ");
         String posicao = sc.nextLine().trim();
 
+        //leitura do slug
         System.out.print("Slug (separado por hífen, ex: nome-sobrenome): ");
         String slugInput = sc.nextLine().trim();
         List<String> listaSlug = new ArrayList<>();
@@ -150,10 +155,12 @@ public class Main {
             listaSlug = Arrays.asList(slugInput.split("-"));
         }
 
+        //leitura da data
         System.out.print("Data (AAAA-MM-DD ou ENTER para data de hoje): ");
         String dataInput = sc.nextLine().trim();
         LocalDate data;
 
+        //adiciona a data do momento de execução se o usuário não digitar
         if (dataInput.isEmpty()) {
             data = LocalDate.now();
         } else {
@@ -165,6 +172,6 @@ public class Main {
             }
         }
 
-        return new Jogador(id, nome, listaSlug, posicao, data);
+        return new Jogador(0, nome, listaSlug, posicao, data); //id = 0, muda dentro da funcao create ou no case do update
     }
 }

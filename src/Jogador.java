@@ -115,25 +115,25 @@ public class Jogador implements Comparable<Jogador> {
         ByteArrayInputStream bais = new ByteArrayInputStream(ba);
         DataInputStream dis = new DataInputStream(bais);
 
-        //le int
+        //lê o ID
         this.athleteId = dis.readInt();
 
-        //le string
+        //lê o nome
         this.firstName = dis.readUTF();
 
-        //le slug
+        //lê o slug (nome-sobrenome)
         int qtdSlug = dis.readInt();
         this.slug = new ArrayList<>(qtdSlug);
         for (int i = 0; i < qtdSlug; i++) {
             this.slug.add(dis.readUTF());
         }
 
-        //le posicao
+        //lê a posição
         char c1 = dis.readChar();
         char c2 = dis.readChar();
         this.positionAbbreviation = ("" + c1 + c2).trim();
 
-        //le data
+        //lê a data
         long dias = dis.readLong();
         this.timestamp = (dias != 0) ? LocalDate.ofEpochDay(dias) : null;
     }

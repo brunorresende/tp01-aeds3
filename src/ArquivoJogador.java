@@ -96,12 +96,13 @@ public class ArquivoJogador {
             // leitura do (byte 0) para verificar o maior ID existente
             raf.seek(0);
             int ultimoId = raf.readInt();
+            int novoId = ultimoId + 1; //gera o novo ID que sera usado
 
-            // atualiza o cabeçalho no byte zero se o ID atual for o maior
-            if (novoJogador.getAthleteId() > ultimoId) {
-                raf.seek(0);
-                raf.writeInt(novoJogador.getAthleteId());
-            }
+            novoJogador.setAthleteId(novoId); // sobrescreve qualquer ID que tenha vindo de outra funcao
+
+            // atualiza o cabeçalho com o novo último ID
+            raf.seek(0);
+            raf.writeInt(novoId);
 
             raf.seek(raf.length()); // posiciona o ponteiro no fim do arquivo para escrita
             byte[] bytes = novoJogador.toByteArray(); // serializa o objeto em um array de bytes

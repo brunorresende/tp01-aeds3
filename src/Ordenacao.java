@@ -13,6 +13,7 @@ public class Ordenacao {
         List<File> runs = gerarRuns(quantBlocos); // aqui esta sendo criado apenas a quantidade de blocos a ser usada
     }
 
+
     private List<File> gerarRuns(int quantBlocos) throws IOException {
         List<File> runs = new ArrayList<>();
         arquivo.resetarLeituraOrdenacao();
