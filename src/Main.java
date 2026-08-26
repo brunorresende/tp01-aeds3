@@ -1,4 +1,3 @@
-import java.sql.SQLOutput;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.ArrayList;
@@ -113,13 +112,13 @@ public class Main {
                     }
 
                     case 6: { // Ordenação
-                        System.out.println("Digite a quantidade de arquivos que voce quer utilizar entre 3-5");
+                        System.out.println("Digite a quantidade de arquivos que voce quer utilizar");
                         int quantArq = sc.nextInt();
                         System.out.println("Agora digite a quantidade de registros por blocos");
-                        int quantBlocos = sc.nextInt();
+                        int quantReg = sc.nextInt();
                         double inicio = new Date().getTime();
-                        Ordenacao ordem = new Ordenacao(arquivo); // passando a quantidade de arquivo que o usario quer usar para intercalar
-                        ordem.Ordenar(quantArq, quantBlocos);
+                        Ordenacao ordem = new Ordenacao(arquivo);
+                        ordem.gerarArq(quantArq, quantReg); // passando a quantidade de arquivo que o usario quer usar para intercalar
                         double fim = new Date().getTime();
                         double tempoExecucao = (fim - inicio) / 1000.0;
 
