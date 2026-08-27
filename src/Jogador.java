@@ -1,13 +1,12 @@
 import java.io.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
+
 
 public class Jogador implements Comparable<Jogador> {
     private int athleteId; // ID
     private String firstName; // Primeiro Nome
-    private List<String> slug; // Nome e Sobrenome
+    private String slug; // Nome e Sobrenome
     private String positionAbbreviation; // Posição
     private LocalDate timestamp; // Data
 
@@ -16,7 +15,7 @@ public class Jogador implements Comparable<Jogador> {
 
     public Jogador(){}
 
-    public Jogador(int athleteId, String firstName, List<String> slug, String positionAbbreviation, LocalDate timestamp){
+    public Jogador(int athleteId, String firstName, String slug, String positionAbbreviation, LocalDate timestamp){
         this.athleteId = athleteId;
         this.firstName = firstName;
         this.slug = slug;
@@ -43,11 +42,11 @@ public class Jogador implements Comparable<Jogador> {
         this.firstName = firstName;
     }
 
-    public List<String> getSlug() {
+    public String getSlug() {
         return slug;
     }
 
-    public void setSlug(List<String> slug) {
+    public void setSlug(String slug) {
         this.slug = slug;
     }
 
@@ -83,14 +82,7 @@ public class Jogador implements Comparable<Jogador> {
         dos.writeUTF(firstName);
 
         //Slug (nome completo) - (Lista de valores com separador)
-        if (slug != null) {
-            dos.writeInt(slug.size()); // salva a quantidade de itens na lista
-            for (String item : slug) {
-                dos.writeUTF(item);
-            }
-        } else {
-            dos.writeInt(0);
-        }
+        dos.writeUTF(slug != null ? slug : "");
 
         //  Posicao (String de tamanho fixo)
         String pos = (positionAbbreviation != null) ? positionAbbreviation : "";
@@ -122,11 +114,7 @@ public class Jogador implements Comparable<Jogador> {
         this.firstName = dis.readUTF();
 
         //lê o slug (nome-sobrenome)
-        int qtdSlug = dis.readInt();
-        this.slug = new ArrayList<>(qtdSlug);
-        for (int i = 0; i < qtdSlug; i++) {
-            this.slug.add(dis.readUTF());
-        }
+        this.slug = dis.readUTF();
 
         //lê a posição
         char c1 = dis.readChar();

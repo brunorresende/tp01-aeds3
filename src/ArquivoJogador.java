@@ -1,8 +1,6 @@
 import java.io.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+
 
 public class ArquivoJogador {
     private String NOME_ARQUIVO = "jogadores.db";
@@ -45,10 +43,7 @@ public class ArquivoJogador {
                 String nome = dados[1]; //Salva o nome
 
                 //  Slug
-                List<String> listaSlug = new ArrayList<>(); //utilizando lista
-                if (!dados[2].isEmpty()) {
-                    listaSlug = Arrays.asList(dados[2].split("-")); //strings separado por hífen "-"
-                }
+                String slug = dados[2]; // String com separador "-" definido
 
                 //  Posição
                 String posicao = dados[3];
@@ -61,7 +56,7 @@ public class ArquivoJogador {
                 }
 
                 // serializa o objeto em array de bytes
-                Jogador jogador = new Jogador(id, nome, listaSlug, posicao, data);
+                Jogador jogador = new Jogador(id, nome, slug, posicao, data);
                 byte[] vetorBytes = jogador.toByteArray();
 
 

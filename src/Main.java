@@ -1,8 +1,5 @@
 import java.time.LocalDate;
 import java.util.Date;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -159,11 +156,8 @@ public class Main {
 
         //leitura do slug
         System.out.print("Slug (separado por hífen, ex: nome-sobrenome): ");
-        String slugInput = sc.nextLine().trim();
-        List<String> listaSlug = new ArrayList<>();
-        if (!slugInput.isEmpty()) {
-            listaSlug = Arrays.asList(slugInput.split("-"));
-        }
+        String slug = sc.nextLine().trim();
+
 
         //leitura da data
         System.out.print("Data (AAAA-MM-DD ou ENTER para data de hoje): ");
@@ -182,6 +176,6 @@ public class Main {
             }
         }
 
-        return new Jogador(0, nome, listaSlug, posicao, data); //id = 0, muda dentro da funcao create ou no case do update
+        return new Jogador(0, nome, slug, posicao, data); //id = 0, muda dentro da funcao create ou no case do update
     }
 }
