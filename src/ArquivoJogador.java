@@ -30,14 +30,15 @@ public class ArquivoJogador {
             raf.seek(0);
             raf.writeInt(0);
 
-            int ultimoID = 0;
+            int proximoID = 0; // contador usado para gerar ID sequenciais na carga
 
             while ((linha = br.readLine()) != null) {
                 // o parâmetro -1 garante a leitura de colunas vazias no final da linha
                 String[] dados = linha.split(",", -1);
 
-                //  ID
-                int id = Integer.parseInt(dados[0]);
+                //  ID gerado sequencialmente no momento da carga (ignora o ID original do CSV)
+                proximoID++;
+                int id = proximoID;
 
                 //  Nome
                 String nome = dados[1]; //Salva o nome
@@ -65,15 +66,13 @@ public class ArquivoJogador {
                 raf.writeInt(vetorBytes.length);    // indicador de tamanho em bytes (4B)
                 raf.write(vetorBytes);  // vetor de bytes do objeto (NB)
 
-                if (id > ultimoID) {
-                    ultimoID = id;
-                }
+
             }
             br.close();
 
             // atualiza o cabeçalho no byte zero com o maior ID encontrado
             raf.seek(0);
-            raf.writeInt(ultimoID);
+            raf.writeInt(proximoID); // como ele esta criando o ID sozinho, usa esse valor para atualizar
 
         } catch (Exception e) {
             System.out.println("Erro ao carregar CSV: " + e.getMessage());
