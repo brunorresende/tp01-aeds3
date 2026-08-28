@@ -17,7 +17,7 @@ public class Ordenacao {
     }
 
     public void gerarArq(int quantArq, int quantReg) throws IOException { // metodo para gerar os arquivos auxiliares
-        Path arquivoOrigem = Paths.get("players-selected-columns 2.csv");
+        Path arquivoOrigem = Paths.get("../players-selected-columns 2.csv");
 
         if (!Files.exists(arquivoOrigem)) { // verificando se o usuario conseguiu realizar a carga do arquivo antes de ordenar
             System.out.println("O arquivo de origem 'players-selected-columns 2.csv' não foi encontrado!");
@@ -64,6 +64,7 @@ public class Ordenacao {
     }
 
     private List<String> ordenarRegistros(List<String> blocoAtual){
+        blocoAtual.removeIf(linha -> linha == null || linha.trim().isEmpty() || linha.split(",").length < 2); // linha para previnir quanto as linhas em branco do csv
         Collections.sort(blocoAtual, Comparator.comparing(linha -> linha.split(",")[1]));
         /* nessa linha de código tem uma função lambda (função anônima) que utiliza o collection sort para ordenar os elementos do bloco de registros atuais,
         e dentro dele há a função 'Comparator.comparing' que é uma função que serve para comparar dois atributos, que nesse caso são os nomes dos atletas, e
