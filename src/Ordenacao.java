@@ -49,10 +49,13 @@ public class Ordenacao {
                     escreverArquivo(arquivoTemp[indiceArquivoAtual], blocoTemp);
 
                     blocoAtual.clear();
-                    blocoTemp.clear();
                     indiceArquivoAtual = (indiceArquivoAtual + 1) % quantArq;
                 }
             }
+
+            Path arquivoDestino = Paths.get("arquivo_destino.csv");
+            intercalarArquivo(arquivoTemp, arquivoDestino);
+
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -84,4 +87,68 @@ public class Ordenacao {
         }
     }
 
+    private void intercalarArquivo(Path[] arquivoTemp, Path arquivoDestino ) throws IOException{ // método para intercalar os arquivos criados
+        try {
+            int totalArq = arquivoTemp.length;
+            BufferedReader[] readers = new BufferedReader[totalArq]; // crio um vetor de reader pra justamente conseguir ler a quantidade de arquivos ao mesmo tempo
+            String[] proximaLinha = new String[totalArq]; // serve pra guardar a posicao em cada arquivo
+            String cabecalho = "";
+
+            for (int i = 0; i < totalArq; i++) {
+                if (Files.exists(arquivoTemp[i]) && Files.size(arquivoTemp[i]) > 0) {
+                    readers[i] = Files.newBufferedReader(arquivoTemp[i], StandardCharsets.UTF_8);
+
+                    String linhaLida = readers[i].readLine();
+                    if (cabecalho.isEmpty() && linhaLida != null) {
+                        cabecalho = linhaLida; // guarda o cabeçalho do arquivo original
+                    }
+
+                    proximaLinha[i] = readers[i].readLine(); // le os arquivos
+                }
+            }
+            try (BufferedWriter writer = Files.newBufferedWriter(arquivoDestino, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                if (!cabecalho.isEmpty()) { // abre o arquivo destino para escrever o cabeçalho
+                    writer.write(cabecalho);
+                    writer.newLine();
+                }
+
+                while (true) { // loop para encontrar o menor nome entre o s registros abertos
+                    int indiceMenor = -1;
+                    String menorValor = null;
+
+                    for (int i = 0; i < totalArq; i++) {
+                        if (proximaLinha[i] != null) { // o if aqui vai procurando uma linha q nao esteja vazia
+                            if (menorValor == null) {
+                                menorValor = proximaLinha[i];
+                                indiceMenor = i;
+                            } else { // aqui ocorrre a comparação para caso menorvalor ja tenha outro valor sem ser null
+                                String nomeAtual = proximaLinha[i].split(",")[1];
+                                String nomeMenorAteAgora = menorValor.split(",")[1];
+
+                                if (nomeAtual.compareTo(nomeMenorAteAgora) < 0) { // se menor valor nao for mais null ele compara, e troca os valores do indice e a string
+                                    menorValor = proximaLinha[i];
+                                    indiceMenor = i;
+                                }
+                            }
+                        }
+                    }
+                    if (indiceMenor == -1) { // caso tenha acabado os dados
+                        break;
+                    }
+                    writer.write(menorValor); // escreve o menor no destino
+                    writer.newLine();
+                    proximaLinha[indiceMenor] = readers[indiceMenor].readLine();// pula o registro de onde o arquivo foi feito
+                }
+            }
+            for (BufferedReader reader : readers) { // fecho os readers abertos
+                if (reader != null) {
+                    reader.close();
+                }
+            }
+            System.out.println("Intercalação foi feita em " + arquivoDestino.getFileName());
+        } catch (IOException e) {
+            System.out.println("Não deu para intercalar");
+            e.printStackTrace();
+        }
+    }
 }
