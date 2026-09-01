@@ -64,11 +64,11 @@ public class Ordenacao {
     }
 
     private List<String> ordenarRegistros(List<String> blocoAtual){
-        blocoAtual.removeIf(linha -> linha == null || linha.trim().isEmpty() || linha.split(",").length < 2); // linha para previnir quanto as linhas em branco do csv
-        Collections.sort(blocoAtual, Comparator.comparing(linha -> linha.split(",")[1]));
+        blocoAtual.removeIf(linha -> linha == null || linha.trim().isEmpty() || !linha.contains(",")); // linha para previnir quanto as linhas em branco do csv
+        Collections.sort(blocoAtual, Comparator.comparing(linha -> Integer.parseInt(linha.split(",")[0].trim())));
         /* nessa linha de código tem uma função lambda (função anônima) que utiliza o collection sort para ordenar os elementos do bloco de registros atuais,
-        e dentro dele há a função 'Comparator.comparing' que é uma função que serve para comparar dois atributos, que nesse caso são os nomes dos atletas, e
-        dentro dessa função tem uma função lambda que funciona da seguinte forma, eu pego o dado atual e nele eu vou para o nome do atleta, como no nosso csv os
+        e dentro dele há a função 'Comparator.comparing' que é uma função que serve para comparar dois atributos, que nesse caso são os ids dos atletas, e
+        dentro dessa função tem uma função lambda que funciona da seguinte forma, eu pego o dado atual e nele eu vou para o id do atleta, como no nosso csv os
         dados sao separados por virgula utilizamos o split e comparamos e por fim ordena o bloco de registro atual
         * */
 
@@ -113,7 +113,7 @@ public class Ordenacao {
                     writer.newLine();
                 }
 
-                while (true) { // loop para encontrar o menor nome entre o s registros abertos
+                while (true) { // loop para encontrar o menor id entre o s registros abertos
                     int indiceMenor = -1;
                     String menorValor = null;
 
@@ -123,10 +123,10 @@ public class Ordenacao {
                                 menorValor = proximaLinha[i];
                                 indiceMenor = i;
                             } else { // aqui ocorrre a comparação para caso menorvalor ja tenha outro valor sem ser null
-                                String nomeAtual = proximaLinha[i].split(",")[1];
-                                String nomeMenorAteAgora = menorValor.split(",")[1];
+                                String idAtual = proximaLinha[i].split(",")[0].trim();
+                                String idMenorAteAgora = menorValor.split(",")[0].trim();
 
-                                if (nomeAtual.compareTo(nomeMenorAteAgora) < 0) { // se menor valor nao for mais null ele compara, e troca os valores do indice e a string
+                                if (idAtual.compareTo(idMenorAteAgora) < 0) { // se menor valor nao for mais null ele compara, e troca os valores do indice e a string
                                     menorValor = proximaLinha[i];
                                     indiceMenor = i;
                                 }
