@@ -53,6 +53,12 @@ public class Ordenacao {
                 }
             }
 
+            // grava o ultimo bloco, que pode ter sobrado incompleto (menor que quantReg)
+            if (!blocoAtual.isEmpty()) {
+                List<String> blocoTemp = ordenarRegistros(blocoAtual);
+                escreverArquivo(arquivoTemp[indiceArquivoAtual], blocoTemp);
+            }
+
             Path arquivoDestino = Paths.get("arquivo_destino.csv");
             intercalarArquivo(arquivoTemp, arquivoDestino);
 
@@ -123,10 +129,10 @@ public class Ordenacao {
                                 menorValor = proximaLinha[i];
                                 indiceMenor = i;
                             } else { // aqui ocorrre a comparação para caso menorvalor ja tenha outro valor sem ser null
-                                String idAtual = proximaLinha[i].split(",")[0].trim();
-                                String idMenorAteAgora = menorValor.split(",")[0].trim();
+                                int idAtual = Integer.parseInt(proximaLinha[i].split(",")[0].trim());
+                                int idMenorAteAgora = Integer.parseInt(menorValor.split(",")[0].trim());
 
-                                if (idAtual.compareTo(idMenorAteAgora) < 0) { // se menor valor nao for mais null ele compara, e troca os valores do indice e a string
+                                if (idAtual < idMenorAteAgora) { // se menor valor nao for mais null ele compara, e troca os valores do indice e a string
                                     menorValor = proximaLinha[i];
                                     indiceMenor = i;
                                 }
