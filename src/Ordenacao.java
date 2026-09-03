@@ -17,7 +17,7 @@ public class Ordenacao {
     }
 
     public void gerarArq(int quantArq, int quantReg) throws IOException { // metodo para gerar os arquivos auxiliares
-        Path arquivoOrigem = Paths.get("../players-selected-columns 2.csv");
+        Path arquivoOrigem = Paths.get("players-selected-columns 2.csv");
 
         if (!Files.exists(arquivoOrigem)) { // verificando se o usuario conseguiu realizar a carga do arquivo antes de ordenar
             System.out.println("O arquivo de origem 'players-selected-columns 2.csv' não foi encontrado!");

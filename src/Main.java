@@ -61,7 +61,7 @@ public class Main {
                         boolean sucesso = arquivo.create(novo);
 
                         if (sucesso) {
-                            System.out.println("Novo jogador com ID " + novo.getAthleteId() + "cadastrado com sucesso!");
+                            System.out.println("Novo jogador com ID " + novo.getAthleteId() + " cadastrado com sucesso!");
                         } else {
                             System.out.println("Erro ao cadastrar jogador.");
                         }
