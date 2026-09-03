@@ -52,7 +52,6 @@ public class Ordenacao {
                     indiceArquivoAtual = (indiceArquivoAtual + 1) % quantArq;
                 }
             }
-
             // grava o ultimo bloco, que pode ter sobrado incompleto (menor que quantReg)
             if (!blocoAtual.isEmpty()) {
                 List<String> blocoTemp = ordenarRegistros(blocoAtual);
