@@ -2,6 +2,7 @@ import java.sql.SQLOutput;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.Scanner;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
@@ -35,7 +36,7 @@ public class Main {
                         String confirma = sc.nextLine().trim();
 
                         if (confirma.equalsIgnoreCase("s")) {
-                            arquivo.realizarCargaCSV("players-selected-columns 2.csv"); //Carga da base de dados
+                            arquivo.realizarCargaCSV("../players-selected-columns 2.csv"); //Carga da base de dados
                             System.out.println("Base de dados carregada com sucesso!");
                         } else {
                             System.out.println("Carga cancelada.");
@@ -128,7 +129,7 @@ public class Main {
 
                     case 7: {
                         System.out.println("Comando entendido! Vamos gerar a lista invertida!");
-                        ListaInvertida lista = new ListaInvertida();
+                        ListaInvertida lista = new ListaInvertida("./jogadores.db", ListaInvertida.Campo.NOME);
                         double inicio = new Date().getTime();
                         lista.gerar();
                         double fim = new Date().getTime();
@@ -140,13 +141,17 @@ public class Main {
                             double inicioBusca = new Date().getTime();
                             System.out.println("Digite a  palavra que deseja ser buscada");
                             String palavraBusca = sc.next();
-                            List <ListaInvertida> regBusca = lista.buscar(palavraBusca);
+                            List <Jogador> regBusca = lista.buscar(palavraBusca);
                             double fimBusca = new Date().getTime();
                             double tempoBusca = (fimBusca - inicioBusca) / 1000.0;
-                            System.out.println("O tempo de busca foi " + tempoBusca + "s e os resultados obtidos foram os seguintes: ");
+                            System.out.println("O tempo de busca foi  " + tempoBusca + "s e os resultados obtidos foram os seguintes: ");
 
-                            for(ListaInvertida nomeBusca : regBusca) {
-                                System.out.println(nomeBusca);
+                            if (regBusca.isEmpty()) {
+                                System.out.println("Nenhum jogador encontrado com o termo informado.");
+                            } else {
+                                for (Jogador jogadorEncontrado : regBusca) {
+                                    System.out.println(jogadorEncontrado.toString());
+                                }
                             }
                         }
                         break;
