@@ -1,3 +1,4 @@
+import java.sql.SQLOutput;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.Scanner;
@@ -21,6 +22,7 @@ public class Main {
                 System.out.println("4 - Atualizar registro");
                 System.out.println("5 - Deletar registro");
                 System.out.println("6 - Ordenar arquivo");
+                System.out.println("7 - Gerar Lista Invertida");
                 System.out.println("0 - Sair");
                 System.out.print("Escolha uma opção: ");
 
@@ -121,6 +123,30 @@ public class Main {
 
                         System.out.println("A ordenação com " + quantArq + " arquivos durou " + tempoExecucao + "s");
 
+                        break;
+                    }
+
+                    case 7: {
+                        System.out.println("Comando entendido! Vamos gerar a lista invertida!");
+                        ListaInvertida lista = new ListaInvertida();
+                        double inicio = new Date().getTime();
+                        lista.gerar();
+                        double fim = new Date().getTime();
+                        double tempoGasto = (fim - inicio) / 1000.0;
+
+                        System.out.println("Lista Gerada! O tempo levado pelo código foi" + tempoGasto +"s! Escolha a quantidade de buscas que quer realizar");
+                        int quantBusca = sc.nextInt();
+                        for(int i = 0; i < quantBusca; i++){
+                            double inicioBusca = new Date().getTime();
+                            List <ListaInvertida> regBusca = lista.buscar();
+                            double fimBusca = new Date().getTime();
+                            double tempoBusca = (fimBusca - inicioBusca) / 1000.0;
+                            System.out.println("O tempo de busca foi " + tempoBusca + "s e os resultados obtidos foram os seguintes: ");
+
+                            for(ListaInvertida nomeBusca : regBusca) {
+                                System.out.println(nomeBusca);
+                            }
+                        }
                         break;
                     }
 
