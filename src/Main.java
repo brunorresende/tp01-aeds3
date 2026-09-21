@@ -138,7 +138,9 @@ public class Main {
                         int quantBusca = sc.nextInt();
                         for(int i = 0; i < quantBusca; i++){
                             double inicioBusca = new Date().getTime();
-                            List <ListaInvertida> regBusca = lista.buscar();
+                            System.out.println("Digite a  palavra que deseja ser buscada");
+                            String palavraBusca = sc.next();
+                            List <ListaInvertida> regBusca = lista.buscar(palavraBusca);
                             double fimBusca = new Date().getTime();
                             double tempoBusca = (fimBusca - inicioBusca) / 1000.0;
                             System.out.println("O tempo de busca foi " + tempoBusca + "s e os resultados obtidos foram os seguintes: ");
