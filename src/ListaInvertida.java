@@ -4,7 +4,7 @@ import java.text.Normalizer;
 import java.util.*;
 
 public class ListaInvertida {
-    public enum Campo { NOME, POSICAO }
+    public enum Campo { NOME, POSICAO } // define em quais campos podem ser indexados
 
     private String arquivoDados;
     private String arquivoChaves;
@@ -35,9 +35,9 @@ public class ListaInvertida {
         }
 
         try (RandomAccessFile arq = new RandomAccessFile(arquivoDados, "r")) {
-            arq.seek(tamanhoCabecalho); // não pega o ID máximo do cabeçalho
+            arq.seek(tamanhoCabecalho); // não pega o id máximo do cabeçalho
 
-            while (arq.getFilePointer() < arq.length()) {
+            while (arq.getFilePointer() < arq.length()) { // percorre o 'jogadores.db' por completo, le a lapide e o tamanho do registro, se o a lapide for marcada como 'viva' puxa os dados, caso nao, apenas pula o registro
                 long enderecoAtual = arq.getFilePointer();
                 byte lapide = arq.readByte();
                 int tamanho = arq.readInt();
@@ -63,23 +63,21 @@ public class ListaInvertida {
     }
 
     private void gravarIndicesNoDisco(TreeMap<String, List<Long>> dicionario) throws IOException {
-        try (RandomAccessFile arqChaves = new RandomAccessFile(arquivoChaves, "rw");
-             RandomAccessFile arqListas = new RandomAccessFile(arquivoListas, "rw")) {
+        try (RandomAccessFile arqChaves = new RandomAccessFile(arquivoChaves, "rw"); RandomAccessFile arqListas = new RandomAccessFile(arquivoListas, "rw")) {
 
-            arqChaves.setLength(0);
+            arqChaves.setLength(0);// limpa caso o programa rode mais de uma vez
             arqListas.setLength(0);
 
             long posicaoLista = 0;
 
             for (Map.Entry<String, List<Long>> entrada : dicionario.entrySet()) {
                 arqChaves.write(formatarStringFixa(entrada.getKey()));
-                arqChaves.writeLong(posicaoLista);
+                arqChaves.writeLong(posicaoLista); // grava no arquivo, 40 bytes fixos, e a posição em que a primeira entrada da lista dessa chave vai ficar no arquivo de lista
 
                 List<Long> enderecos = entrada.getValue();
-                for (int i = 0; i < enderecos.size(); i++) {
+                for (int i = 0; i < enderecos.size(); i++) { // percorre os endereços daquela chave e grava, um a um
                     arqListas.writeLong(enderecos.get(i)); // caso seja o ultimo elemnento aponta para -1, senao, aponta para o proximo
-                    long proximo = (i == enderecos.size() - 1) ? -1 : posicaoLista + 1;
-                    arqListas.writeLong(proximo);
+                    long proximo = (i == enderecos.size() - 1) ? -1 : posicaoLista + 1;arqListas.writeLong(proximo);
                     posicaoLista++;
                 }
             }
@@ -90,13 +88,10 @@ public class ListaInvertida {
         List<Jogador> resultados = new ArrayList<>();
         String chaveBuscada = normalizarString(termoBusca);
 
-        try (RandomAccessFile arqChaves = new RandomAccessFile(arquivoChaves, "r"); RandomAccessFile arqListas = new RandomAccessFile(arquivoListas, "r");
-             RandomAccessFile arqDados = new RandomAccessFile(arquivoDados, "r")) {
-
-            long ponteiroLista = buscaBinariaChave(arqChaves, chaveBuscada);
-
+        try (RandomAccessFile arqChaves = new RandomAccessFile(arquivoChaves, "r"); RandomAccessFile arqListas = new RandomAccessFile(arquivoListas, "r"); RandomAccessFile arqDados = new RandomAccessFile(arquivoDados, "r")) {
+            long ponteiroLista = buscaBinariaChave(arqChaves, chaveBuscada); // devolve a posicao da primeira entrada da lista dessa chave
             if (ponteiroLista != -1) {
-                while (ponteiroLista != -1) {
+                while (ponteiroLista != -1) { // o while percorre a lista, calcula o offset em bytes, le o endereço e o ponteiro para o proximo 'nó' e avança ate achar o -1
                     arqListas.seek(ponteiroLista * tamanhoEntradaLista);
                     long enderecoDB = arqListas.readLong();
                     ponteiroLista = arqListas.readLong();
@@ -121,21 +116,24 @@ public class ListaInvertida {
 
     private long buscaBinariaChave(RandomAccessFile arqChaves, String chave) throws IOException {
         long inicio = 0;
-        long fim = (arqChaves.length() / tamanhoEntradaChave) - 1;
+        long fim = (arqChaves.length() / tamanhoEntradaChave) - 1; // busca binaria realizada em arquivo
 
         while (inicio <= fim) {
             long meio = (inicio + fim) / 2;
-            arqChaves.seek(meio * tamanhoEntradaChave);
+            arqChaves.seek(meio * tamanhoEntradaChave); // a cada interação pula para o registro do meio, le os 40 bytes da chave e o 'long' do ponteiro em seguida
 
             byte[] bytesLidos = new byte[tamanhoChave];
             arqChaves.readFully(bytesLidos);
             String chaveLida = new String(bytesLidos, StandardCharsets.UTF_8).trim();
             long ponteiroLista = arqChaves.readLong();
 
-            int comparacao = chave.compareTo(chaveLida);
-            if (comparacao == 0) return ponteiroLista;
-            else if (comparacao < 0) fim = meio - 1;
-            else inicio = meio + 1;
+            int comparacao = chave.compareTo(chaveLida); // se for 0, achou, se for negativo a chave vem antes, descartando mediante a cada resultado
+            if (comparacao == 0)
+                return ponteiroLista;
+            else if (comparacao < 0)
+                fim = meio - 1;
+            else
+                inicio = meio + 1;
         }
         return -1;
     }
@@ -151,7 +149,7 @@ public class ListaInvertida {
         return n.length() > tamanhoChave ? n.substring(0, tamanhoChave) : n;
     }
 
-    private byte[] formatarStringFixa(String s) {
+    private byte[] formatarStringFixa(String s) { // funçao que 'garante' que as variações em que um nome é escrito, no final resulte todos no mesmo
         byte[] buffer = new byte[tamanhoChave];
         byte[] bytesString = s.getBytes(StandardCharsets.UTF_8);
         System.arraycopy(bytesString, 0, buffer, 0, Math.min(bytesString.length, tamanhoChave));
