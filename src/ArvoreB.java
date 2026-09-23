@@ -52,6 +52,46 @@ public class ArvoreB {
     private int tamanhoNoEmBytes() {
         return 1 + 4 + (ordem - 1) * (4 + 8) + ordem * 8;
     }
+
+    //  Leitura / escrita de nós no arquivo de indice
+
+    private No lerNo(long offset) throws IOException {
+        raf.seek(offset);
+        No no = new No(raf.readByte() == 1);
+        no.offsetNoArquivo = offset;
+        no.numChaves = raf.readInt();
+        for (int i = 0; i < ordem - 1; i++) {
+            no.chaves[i] = raf.readInt();
+            no.posicoes[i] = raf.readLong();
+        }
+        for (int i = 0; i < ordem; i++) {
+            no.filhos[i] = raf.readLong();
+        }
+        return no;
+    }
+
+    private void escreverNo(No no) throws IOException {
+        if (no.offsetNoArquivo == -1) {
+            // no novo: aloca espaco sempre no final do arquivo
+            no.offsetNoArquivo = raf.length();
+        }
+        raf.seek(no.offsetNoArquivo);
+        raf.writeByte(no.folha ? 1 : 0);
+        raf.writeInt(no.numChaves);
+        for (int i = 0; i < ordem - 1; i++) {
+            raf.writeInt(no.chaves[i]);
+            raf.writeLong(no.posicoes[i]);
+        }
+        for (int i = 0; i < ordem; i++) {
+            raf.writeLong(no.filhos[i]);
+        }
+    }
+
+    private void atualizarRaiz(long novoOffset) throws IOException {
+        offsetRaiz = novoOffset;
+        raf.seek(OFFSET_CABECALHO);
+        raf.writeLong(offsetRaiz);
+    }
 }
 
 
