@@ -129,5 +129,159 @@ public class ArvoreB {
         //não é folha, desce para o filho correspondente
         return buscarNo(lerNo(no.filhos[i]), chave);
     }
+
+
+    // INSERCAO
+
+    /*
+     * Insere (chave, posicao). Se a chave ja existir, apenas ATUALIZA a posicao
+     * associada (upsert) - util para quando um UPDATE realoca um registro para
+     * o fim do arquivo de dados, mudando sua posicao mas nao seu id.
+     */
+
+    public void inserir(int chave, long posicao) throws IOException {
+        //Tenta atualizar se a chave já existir no arquivo (upsert)
+        if (atualizarSeExistir(chave, posicao)) {
+            return;
+        }
+
+        //arvore vazia
+        if (offsetRaiz == -1) {
+            No raiz = new No(true);
+            raiz.chaves[0] = chave;
+            raiz.posicoes[0] = posicao;
+            raiz.numChaves = 1;
+            escreverNo(raiz);   //grava a nova raiz no final do arquivo em disco
+            atualizarRaiz(raiz.offsetNoArquivo);    //grava o offset no cabeçalho
+            return;
+        }
+
+        //carrega a raiz atual do disco para a memória RAM
+        No raiz = lerNo(offsetRaiz);
+
+        //caso para a raiz cheia
+        if (raiz.numChaves == ordem - 1) {
+            /* raiz cheia: a arvore cresce em altura.
+             * cria uma nova raiz (interna), com a raiz antiga como unico filho,
+             * divide a raiz antiga imediatamente.*/
+            No novaRaiz = new No(false);
+            novaRaiz.filhos[0] = raiz.offsetNoArquivo;
+            dividirFilho(novaRaiz, 0, raiz); //split da raiz antiga em dois nós
+            inserirNaoCheio(novaRaiz, chave, posicao); //insere o novo elemento a partir da nova raiz
+            atualizarRaiz(novaRaiz.offsetNoArquivo); //atualiza o cabeçalho
+        } else {
+            //A Raiz não está cheia
+            inserirNaoCheio(raiz, chave, posicao);
+        }
+    }
+
+
+    // metodo buscarNo com uma diferença: quando encontra a chave, ele a substitui e salva no disco.
+    private boolean atualizarSeExistir(int chave, long novaPosicao) throws IOException {
+        if (offsetRaiz == -1) return false;
+        return atualizarNo(lerNo(offsetRaiz), chave, novaPosicao);
+    }
+
+    private boolean atualizarNo(No no, int chave, long novaPosicao) throws IOException {
+        int i = 0;
+        while (i < no.numChaves && chave > no.chaves[i]) i++;
+
+        if (i < no.numChaves && chave == no.chaves[i]) {
+            no.posicoes[i] = novaPosicao;   //Atualiza o offset em memória
+            escreverNo(no); //salva a alteração no arquivo de disco
+            return true;
+        }
+        if (no.folha) return false; //se não encontrou e chegou ao fim
+        return atualizarNo(lerNo(no.filhos[i]), chave, novaPosicao); //continua buscando no filho correto
+    }
+
+
+    // metodo para fazer split, subindo o filho do meio
+    private void dividirFilho(No pai, int indiceFilho, No filhoCheio) throws IOException {
+        int totalChaves = filhoCheio.numChaves;   // = ordem - 1 (esta cheio)
+        int meio = (ordem - 1) / 2;               // indice da chave que sobe
+
+        No novoIrmao = new No(filhoCheio.folha);
+        int qtdDireita = totalChaves - meio - 1;
+
+        // copia a metade direita das chaves para o novo irmao
+        for (int j = 0; j < qtdDireita; j++) {
+            novoIrmao.chaves[j] = filhoCheio.chaves[meio + 1 + j];
+            novoIrmao.posicoes[j] = filhoCheio.posicoes[meio + 1 + j];
+        }
+        novoIrmao.numChaves = qtdDireita;
+
+        // se nao for folha, copia tambem os ponteiros de filhos correspondentes
+        if (!filhoCheio.folha) {
+            for (int j = 0; j <= qtdDireita; j++) {
+                novoIrmao.filhos[j] = filhoCheio.filhos[meio + 1 + j];
+            }
+        }
+
+        int chaveMediana = filhoCheio.chaves[meio];
+        long posicaoMediana = filhoCheio.posicoes[meio];
+
+        filhoCheio.numChaves = meio; // o filho original fica so com a metade esquerda
+
+        // abre espaco no PAI para a chave mediana e o novo ponteiro de filho
+        for (int j = pai.numChaves; j > indiceFilho; j--) {
+            pai.chaves[j] = pai.chaves[j - 1];
+            pai.posicoes[j] = pai.posicoes[j - 1];
+        }
+        for (int j = pai.numChaves + 1; j > indiceFilho + 1; j--) {
+            pai.filhos[j] = pai.filhos[j - 1];
+        }
+
+        pai.chaves[indiceFilho] = chaveMediana;
+        pai.posicoes[indiceFilho] = posicaoMediana;
+        pai.numChaves++;
+
+        // grava o novo irmao primeiro para obter seu offset definitivo em disco
+        escreverNo(novoIrmao);
+        pai.filhos[indiceFilho + 1] = novoIrmao.offsetNoArquivo;
+
+        escreverNo(filhoCheio);
+        escreverNo(pai);
+    }
+
+
+    // insere (chave, posicao) em um no que se sabe NAO estar cheio.
+    private void inserirNaoCheio(No no, int chave, long posicao) throws IOException {
+        int i = no.numChaves - 1;
+
+        if (no.folha) {
+            // desloca chaves maiores para a direita, abrindo espaco
+            while (i >= 0 && chave < no.chaves[i]) {
+                no.chaves[i + 1] = no.chaves[i];
+                no.posicoes[i + 1] = no.posicoes[i];
+                i--;
+            }
+            no.chaves[i + 1] = chave;
+            no.posicoes[i + 1] = posicao;
+            no.numChaves++;
+            escreverNo(no);
+        } else {
+            // decide em qual filho descer
+            while (i >= 0 && chave < no.chaves[i]) i--;
+            i++;
+
+            No filho = lerNo(no.filhos[i]);
+            if (filho.numChaves == ordem - 1) {
+                dividirFilho(no, i, filho);
+                // apos a divisao, uma chave subiu para no; decide de novo o lado
+                if (chave > no.chaves[i]) {
+                    i++;
+                }
+                filho = lerNo(no.filhos[i]);
+            }
+            inserirNaoCheio(filho, chave, posicao);
+        }
+    }
+
+    public void fechar() throws IOException {
+        raf.close(); // Fecha o arquivo RAF
+    }
 }
+
+
 
