@@ -281,6 +281,14 @@ public class ArvoreB {
     public void fechar() throws IOException {
         raf.close(); // Fecha o arquivo RAF
     }
+
+    public void limpar() throws IOException {
+        raf.setLength(0); // descarta todos os nos gravados
+        offsetRaiz = -1;
+        raf.seek(OFFSET_CABECALHO);
+        raf.writeLong(offsetRaiz); // grava cabecalho de arvore vazia
+    }
+
 }
 
 
