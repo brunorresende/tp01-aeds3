@@ -24,6 +24,7 @@ public class Main {
                 System.out.println("5 - Deletar registro");
                 System.out.println("6 - Ordenar arquivo");
                 System.out.println("7 - Gerar Lista Invertida");
+                System.out.println("8 - Gerar CRUD Indexado");
                 System.out.println("0 - Sair");
                 System.out.print("Escolha uma opção: ");
 
@@ -135,13 +136,13 @@ public class Main {
                         double fim = new Date().getTime();
                         double tempoGasto = (fim - inicio) / 1000.0;
 
-                        System.out.println("Lista Gerada! O tempo levado pelo código foi" + tempoGasto +"s! Escolha a quantidade de buscas que quer realizar");
+                        System.out.println("Lista Gerada! O tempo levado pelo código foi" + tempoGasto + "s! Escolha a quantidade de buscas que quer realizar");
                         int quantBusca = sc.nextInt();
-                        for(int i = 0; i < quantBusca; i++){
+                        for (int i = 0; i < quantBusca; i++) {
                             double inicioBusca = new Date().getTime();
                             System.out.println("Digite a  palavra que deseja ser buscada");
                             String palavraBusca = sc.next();
-                            List <Jogador> regBusca = lista.buscar(palavraBusca);
+                            List<Jogador> regBusca = lista.buscar(palavraBusca);
                             double fimBusca = new Date().getTime();
                             double tempoBusca = (fimBusca - inicioBusca) / 1000.0;
                             System.out.println("O tempo de busca foi  " + tempoBusca + "s e os resultados obtidos foram os seguintes: ");
@@ -156,7 +157,7 @@ public class Main {
                         }
                         break;
                     }
-                    case 8:
+                    case 8:{
                         System.out.println("Perfeito vamos criar o CRUD Indexado");
                         double inicio = new Date().getTime();
                         CrudIndexado novoCrud = new CrudIndexado();
@@ -164,7 +165,8 @@ public class Main {
                         double tempoExecucao = (fim - inicio) / 1000;
                         System.out.println("O CRUD Indexado foi gerado com sucesso!Em " + tempoExecucao + "s");
 
-
+                        break;
+                }
                     case 0: {
                         System.out.println("Encerrando aplicação...");
                         rodando = false;
