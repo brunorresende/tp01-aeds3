@@ -156,6 +156,14 @@ public class Main {
                         }
                         break;
                     }
+                    case 8:
+                        System.out.println("Perfeito vamos criar o CRUD Indexado");
+                        double inicio = new Date().getTime();
+                        CrudIndexado novoCrud = new CrudIndexado();
+                        double fim = new Date().getTime();
+                        double tempoExecucao = (fim - inicio) / 1000;
+                        System.out.println("O CRUD Indexado foi gerado com sucesso!Em " + tempoExecucao + "s");
+
 
                     case 0: {
                         System.out.println("Encerrando aplicação...");
