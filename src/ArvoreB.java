@@ -278,6 +278,270 @@ public class ArvoreB {
         }
     }
 
+
+    //  REMOÇÃO
+
+    /* grau minimo (t): cada no (exceto a raiz) deve ter pelo menos t-1 chaves.
+        ordem = 2t (convencao adotada), entao t = ceil(ordem/2).*/
+    private int grauMinimo() {
+        return ordem / 2;
+    }
+
+    // Remove a chave do indice, se ela existir. Se nao existir, nao faz nada.
+    public void remover(int chave) throws IOException {
+        if (offsetRaiz == -1) return; // arvore vazia
+
+        removerDoNo(lerNo(offsetRaiz), chave);
+
+        // a raiz pode ter ficado sem chaves depois da remocao (arvore diminui de altura)
+        No raizAtual = lerNo(offsetRaiz);
+        if (raizAtual.numChaves == 0) {
+            if (raizAtual.folha) {
+                atualizarRaiz(-1); // arvore ficou completamente vazia
+            } else {
+                atualizarRaiz(raizAtual.filhos[0]); // o unico filho vira a nova raiz
+            }
+        }
+    }
+
+    private void removerDoNo(No no, int chave) throws IOException {
+        int i = 0;
+        while (i < no.numChaves && chave > no.chaves[i]) i++;
+
+        if (i < no.numChaves && no.chaves[i] == chave) {
+            if (no.folha) {
+                removerDeFolha(no, i); //Remove direto (caso simples)
+            } else {
+                removerDeNoInterno(no, i);
+            }
+            return;
+        }
+        //chegou numa folha e NÃO encontrou a chave
+        if (no.folha) {
+            return;
+        }
+
+        /* garante que o filho pelo qual vamos descer tenha pelo menos "grauMinimo" chaves
+        para que remover uma chave dele (no pior caso) nao viole a ocupacao minima
+         */
+        No filho = lerNo(no.filhos[i]);
+        // Se o filho tiver MENOS que o grau mínimo de chaves, ele precisa ser "preenchido"
+        if (filho.numChaves < grauMinimo()) {
+            preencher(no, i);
+            // "no" pode ter mudado (chave/filho deslocados por emprestimo ou fusao);
+            // relemos do disco para recalcular corretamente por onde descer
+            no = lerNo(no.offsetNoArquivo);
+            i = 0;
+            while (i < no.numChaves && chave > no.chaves[i]) i++;
+        }
+        filho = lerNo(no.filhos[i]);
+        removerDoNo(filho, chave); // Continua descendo na árvore
+    }
+
+    // Remove a chave de indice "i" de um no folha (caso simples: so desloca e grava).
+
+    //Desloca todas as chaves e posições à direita para a esquerda
+    private void removerDeFolha(No no, int i) throws IOException {
+        for (int j = i; j < no.numChaves - 1; j++) {
+            no.chaves[j] = no.chaves[j + 1];
+            no.posicoes[j] = no.posicoes[j + 1];
+        }
+        no.numChaves--;
+        escreverNo(no);
+    }
+
+    // Remove a chave de indice "i" de um no INTERNO (precisa de predecessor/sucessor ou fusao).
+
+
+    private void removerDeNoInterno(No no, int i) throws IOException {
+        int chave = no.chaves[i];
+        No filhoEsquerdo = lerNo(no.filhos[i]); //sub arvore de valores menores
+        No filhoDireito = lerNo(no.filhos[i + 1]); //sub arvore de valores maiores
+
+        if (filhoEsquerdo.numChaves >= grauMinimo()) {
+            // caso 2a: substitui pela chave predecessora (maior chave da subarvore da esquerda)
+
+            //encontra a maior chave da subárvore esquerda
+            long[] predecessor = obterExtremo(filhoEsquerdo, true);
+            //substitui a chave do nó interno pelo predecessor
+            no.chaves[i] = (int) predecessor[0];
+            no.posicoes[i] = predecessor[1];
+            escreverNo(no);
+            //remove a chave predecessora da subárvore de onde ela foi retirada
+            removerDoNo(lerNo(no.filhos[i]), (int) predecessor[0]);
+
+        } else if (filhoDireito.numChaves >= grauMinimo()) {
+            // caso 2b: substitui pela chave sucessora (menor chave da subarvore direita)
+
+            //encontra a menor chave da subárvore direita
+            long[] sucessor = obterExtremo(filhoDireito, false);
+            //substitui a chave do nó interno pelo sucessor
+            no.chaves[i] = (int) sucessor[0];
+            no.posicoes[i] = sucessor[1];
+            escreverNo(no);
+            //remove a chave sucessora da subárvore de onde ela foi retirada
+            removerDoNo(lerNo(no.filhos[i + 1]), (int) sucessor[0]);
+
+        } else {
+            // junta filhoEsquerdo + chave "i" do pai + filhoDireito em um único nó
+            mesclarFilhos(no, i);
+            //recarrega o pai atualizado do disco
+            no = lerNo(no.offsetNoArquivo);
+            int indiceFilhoMesclado = i; // apos a fusao, o no resultante ocupa a posicao "i"
+            //remove a chave de dentro do novo nó mesclado resultante
+            removerDoNo(lerNo(no.filhos[indiceFilhoMesclado]), chave);
+        }
+    }
+
+    // Desce ate a folha mais a direita (predecessor) ou mais a esquerda (sucessor).
+    private long[] obterExtremo(No no, boolean maiorChave) throws IOException {
+        while (!no.folha) {
+            no = maiorChave ? lerNo(no.filhos[no.numChaves]) : lerNo(no.filhos[0]);
+        }
+        int indice = maiorChave ? no.numChaves - 1 : 0;
+        return new long[]{no.chaves[indice], no.posicoes[indice]};
+    }
+
+    /*
+     * Garante que "pai.filhos[i]" fique com pelo menos "grauMinimo" chaves antes de
+     * descermos nele: pega emprestado de um irmao com excedente, ou funde com um deles.
+     */
+    private void preencher(No pai, int i) throws IOException {
+        //TENTATIVA 1: Pegar emprestado do irmão da ESQUERDA
+        if (i > 0) {
+            No irmaoEsquerdo = lerNo(pai.filhos[i - 1]);
+            if (irmaoEsquerdo.numChaves >= grauMinimo()) {
+                pegarEmprestadoDaEsquerda(pai, i);
+                return;
+            }
+        }
+        // TENTATIVA 2: Pegar emprestado do irmão da DIREITA
+        if (i < pai.numChaves) {
+            No irmaoDireito = lerNo(pai.filhos[i + 1]);
+            if (irmaoDireito.numChaves >= grauMinimo()) {
+                pegarEmprestadoDaDireita(pai, i);
+                return;
+            }
+        }
+        // TENTATIVA 3: Se nenhum irmão puder ceder, faz a FUSÃO (Merge)
+        if (i < pai.numChaves) {
+            mesclarFilhos(pai, i); // funde filhos[i] com filhos[i+1]
+        } else {
+            mesclarFilhos(pai, i - 1); // filhos[i] era o ultimo; funde com o irmao a esquerda
+        }
+    }
+
+    //"pai.filhos[i]" recebe uma chave do pai, e o irmao esquerdo cede sua maior chave ao pai.
+    private void pegarEmprestadoDaEsquerda(No pai, int i) throws IOException {
+        No filho = lerNo(pai.filhos[i]);
+        No irmaoEsquerdo = lerNo(pai.filhos[i - 1]);
+
+        // abre espaco na primeira posicao do filho (desloca tudo uma casa para a direita)
+        for (int j = filho.numChaves - 1; j >= 0; j--) {
+            filho.chaves[j + 1] = filho.chaves[j];
+            filho.posicoes[j + 1] = filho.posicoes[j];
+        }
+        if (!filho.folha) {
+            for (int j = filho.numChaves; j >= 0; j--) {
+                filho.filhos[j + 1] = filho.filhos[j];
+            }
+        }
+
+        // a chave do pai "desce" para o inicio do filho
+        filho.chaves[0] = pai.chaves[i - 1];
+        filho.posicoes[0] = pai.posicoes[i - 1];
+        if (!filho.folha) {
+            filho.filhos[0] = irmaoEsquerdo.filhos[irmaoEsquerdo.numChaves];
+        }
+
+        // a maior chave do irmao esquerdo "sobe" para o pai
+        pai.chaves[i - 1] = irmaoEsquerdo.chaves[irmaoEsquerdo.numChaves - 1];
+        pai.posicoes[i - 1] = irmaoEsquerdo.posicoes[irmaoEsquerdo.numChaves - 1];
+
+        filho.numChaves++;
+        irmaoEsquerdo.numChaves--;
+
+        escreverNo(filho);
+        escreverNo(irmaoEsquerdo);
+        escreverNo(pai);
+    }
+
+    /** Espelho do metodo anterior: empresta do irmao a DIREITA. */
+    private void pegarEmprestadoDaDireita(No pai, int i) throws IOException {
+        No filho = lerNo(pai.filhos[i]);
+        No irmaoDireito = lerNo(pai.filhos[i + 1]);
+
+        // a chave do pai "desce" para o final do filho
+        filho.chaves[filho.numChaves] = pai.chaves[i];
+        filho.posicoes[filho.numChaves] = pai.posicoes[i];
+        if (!filho.folha) {
+            filho.filhos[filho.numChaves + 1] = irmaoDireito.filhos[0];
+        }
+
+        // a menor chave do irmao direito "sobe" para o pai
+        pai.chaves[i] = irmaoDireito.chaves[0];
+        pai.posicoes[i] = irmaoDireito.posicoes[0];
+
+        // desloca o irmao direito uma casa para a esquerda (removeu o primeiro elemento dele)
+        for (int j = 1; j < irmaoDireito.numChaves; j++) {
+            irmaoDireito.chaves[j - 1] = irmaoDireito.chaves[j];
+            irmaoDireito.posicoes[j - 1] = irmaoDireito.posicoes[j];
+        }
+        if (!irmaoDireito.folha) {
+            for (int j = 1; j <= irmaoDireito.numChaves; j++) {
+                irmaoDireito.filhos[j - 1] = irmaoDireito.filhos[j];
+            }
+        }
+
+        filho.numChaves++;
+        irmaoDireito.numChaves--;
+
+        escreverNo(filho);
+        escreverNo(irmaoDireito);
+        escreverNo(pai);
+    }
+
+    /*
+     * Funde "pai.filhos[i]" e "pai.filhos[i+1]" (ambos com o minimo de chaves) num so no,
+     * descendo a chave separadora "pai.chaves[i]" para dentro dele.
+     * O no da direita fica orfao no arquivo (espaco desperdicado, mesma logica das
+     * lapides do TP1: nao reaproveitamos o espaco, so paramos de referencia-lo).
+     */
+
+    private void mesclarFilhos(No pai, int i) throws IOException {
+        No filhoEsquerdo = lerNo(pai.filhos[i]);
+        No filhoDireito = lerNo(pai.filhos[i + 1]);
+
+        // a chave separadora do pai desce para o final do filho esquerdo
+        filhoEsquerdo.chaves[filhoEsquerdo.numChaves] = pai.chaves[i];
+        filhoEsquerdo.posicoes[filhoEsquerdo.numChaves] = pai.posicoes[i];
+
+        // copia todas as chaves (e filhos, se houver) do filho direito para o esquerdo
+        for (int j = 0; j < filhoDireito.numChaves; j++) {
+            filhoEsquerdo.chaves[filhoEsquerdo.numChaves + 1 + j] = filhoDireito.chaves[j];
+            filhoEsquerdo.posicoes[filhoEsquerdo.numChaves + 1 + j] = filhoDireito.posicoes[j];
+        }
+        if (!filhoEsquerdo.folha) {
+            for (int j = 0; j <= filhoDireito.numChaves; j++) {
+                filhoEsquerdo.filhos[filhoEsquerdo.numChaves + 1 + j] = filhoDireito.filhos[j];
+            }
+        }
+        filhoEsquerdo.numChaves = filhoEsquerdo.numChaves + 1 + filhoDireito.numChaves;
+
+        // remove, do pai, a chave separadora e o ponteiro para o filho direito (agora orfao)
+        for (int j = i; j < pai.numChaves - 1; j++) {
+            pai.chaves[j] = pai.chaves[j + 1];
+            pai.posicoes[j] = pai.posicoes[j + 1];
+        }
+        for (int j = i + 1; j < pai.numChaves; j++) {
+            pai.filhos[j] = pai.filhos[j + 1];
+        }
+        pai.numChaves--;
+
+        escreverNo(filhoEsquerdo);
+        escreverNo(pai);
+    }
+
     public void fechar() throws IOException {
         raf.close(); // Fecha o arquivo RAF
     }
