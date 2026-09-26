@@ -149,6 +149,9 @@ public class CrudIndexado {
 
             raf.seek(posRegistro); // reposiciona o ponteiro no byte da lápide
             raf.writeByte(lapideExcluido); // marca com '*'
+
+            indice.remover(idProcurado); //chama o remover() da arvore b
+
             return true;
 
         } catch (Exception e) {
