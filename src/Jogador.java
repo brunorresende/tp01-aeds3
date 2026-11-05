@@ -10,6 +10,9 @@ public class Jogador implements Comparable<Jogador> {
     private String positionAbbreviation; // Posição
     private LocalDate timestamp; // Data
 
+    // sentinela para "sem data": fora do intervalo de datas válidas (0 seria 01/01/1970)
+    private static final long DATA_AUSENTE = Long.MIN_VALUE;
+
 
     //Construtor
 
@@ -95,7 +98,7 @@ public class Jogador implements Comparable<Jogador> {
         dos.writeChars(pos);
 
         //  Data
-        long dias = (timestamp != null) ? timestamp.toEpochDay() : 0;
+        long dias = (timestamp != null) ? timestamp.toEpochDay() : DATA_AUSENTE;
         dos.writeLong(dias);
 
         return baos.toByteArray();
@@ -123,7 +126,7 @@ public class Jogador implements Comparable<Jogador> {
 
         //lê a data
         long dias = dis.readLong();
-        this.timestamp = (dias != 0) ? LocalDate.ofEpochDay(dias) : null;
+        this.timestamp = (dias != DATA_AUSENTE) ? LocalDate.ofEpochDay(dias) : null;
     }
     //formatação da data para exibir
     private static final DateTimeFormatter formatoExibicao = DateTimeFormatter.ofPattern("dd/MM/yyyy");
