@@ -25,6 +25,8 @@ public class Main {
                 System.out.println("6 - Ordenar arquivo");
                 System.out.println("7 - Gerar Lista Invertida");
                 System.out.println("8 - Gerar CRUD Indexado");
+                System.out.println("9 - Compactar base de dados (Huffman e LZW)");
+                System.out.println("10 - Descompactar base de dados");
                 System.out.println("0 - Sair");
                 System.out.print("Escolha uma opção: ");
 
@@ -249,6 +251,26 @@ public class Main {
                             }
                             novoCrud.fechar();
                             System.out.println("Saindo do CRUD indexado...");
+                            break;
+                        }
+                        case 9: { // Compressão com Huffman e LZW
+                            Compressao.comprimir(ArquivoJogador.ARQUIVO_DADOS);
+                            break;
+                        }
+                        case 10: { // Descompressão: substitui o arquivo de dados pela versão escolhida
+                            System.out.print("Digite a versão (X) da compressão que deseja descompactar: ");
+                            int versao = lerInt(sc);
+                            arquivo.fechar(); // o arquivo de dados vai ser reescrito: fecha antes...
+                            boolean substituiu;
+                            try {
+                                substituiu = Compressao.descomprimir(ArquivoJogador.ARQUIVO_DADOS, versao);
+                            } finally {
+                                arquivo = new ArquivoJogador(); // ...e reabre depois (mesmo se der erro)
+                            }
+                            if (substituiu) { // índices guardam posições do arquivo antigo: precisam ser refeitos
+                                CrudIndexado.invalidarIndice();
+                                ListaInvertida.invalidarLista();
+                            }
                             break;
                         }
                         case 0: {
