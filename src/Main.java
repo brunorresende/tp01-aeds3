@@ -28,237 +28,240 @@ public class Main {
                 System.out.println("0 - Sair");
                 System.out.print("Escolha uma opção: ");
 
-                int opcao = sc.nextInt();
-                sc.nextLine(); // limpa o buffer
+                int opcao = lerInt(sc);
 
-                switch (opcao) {
-                    case 1: { // Carregar a base de dados
-                        System.out.print("\nIsso vai apagar todos os dados atuais do arquivo e recarregar do CSV. Confirma? (s/n): ");
-                        String confirma = sc.nextLine().trim();
+                try {
+                    switch (opcao) {
+                        case 1: { // Carregar a base de dados
+                            System.out.print("\nIsso vai apagar todos os dados atuais do arquivo e recarregar do CSV. Confirma? (s/n): ");
+                            String confirma = sc.nextLine().trim();
 
-                        if (confirma.equalsIgnoreCase("s")) {
-                            arquivo.realizarCargaCSV("../players-selected-columns 2.csv"); //Carga da base de dados
-                            System.out.println("Base de dados carregada com sucesso!");
-                        } else {
-                            System.out.println("Carga cancelada.");
+                            if (confirma.equalsIgnoreCase("s")) {
+                                if (arquivo.realizarCargaCSV(ArquivoJogador.CSV)) { //Carga da base de dados
+                                    System.out.println("Base de dados carregada com sucesso!");
+                                } else {
+                                    System.out.println("A carga falhou. A base de dados anterior foi mantida.");
+                                }
+                            } else {
+                                System.out.println("Carga cancelada.");
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case 2: { // Read
-                        System.out.print("\nDigite o ID do jogador: ");
-                        int id = sc.nextInt();
-                        sc.nextLine();
+                        case 2: { // Read
+                            System.out.print("\nDigite o ID do jogador: ");
+                            int id = lerInt(sc);
 
-                        Jogador j = arquivo.read(id);
-                        if (j != null) {
-                            System.out.println(j);
-                        } else {
-                            System.out.println("Registro não encontrado.");
+                            Jogador j = arquivo.read(id);
+                            if (j != null) {
+                                System.out.println(j);
+                            } else {
+                                System.out.println("Registro não encontrado.");
+                            }
+                            break;
                         }
-                        break;
-                    }
-                    case 3: { // Create
-                        System.out.println("\nNOVO CADASTRO");
+                        case 3: { // Create
+                            System.out.println("\nNOVO CADASTRO");
 
-                        Jogador novo = lerDadosDoTeclado(sc); //chama funcao para preencher os dados manualmente
+                            Jogador novo = lerDadosDoTeclado(sc); //chama funcao para preencher os dados manualmente
 
-                        boolean sucesso = arquivo.create(novo);
-
-                        if (sucesso) {
-                            System.out.println("Novo jogador com ID " + novo.getAthleteId() + " cadastrado com sucesso!");
-                        } else {
-                            System.out.println("Erro ao cadastrar jogador.");
-                        }
-                        break;
-                    }
-                    case 4: { // Update
-                        System.out.println("\nATUALIZAR REGISTRO");
-                        System.out.print("Digite o ID do jogador a ser atualizado: ");
-                        int id = sc.nextInt();
-                        sc.nextLine();
-
-                        Jogador existente = arquivo.read(id); //busca o jogador primeiro
-                        if (existente == null) {
-                            System.out.println("Jogador com ID " + id + " não foi encontrado.");
-                        } else {
-                            System.out.println("Dados atuais: " + existente);
-                            System.out.println("\nInforme os novos dados:");
-                            Jogador atualizado = lerDadosDoTeclado(sc); //chama funcao para preencher os dados manualmente
-
-                            //reatribui manualmente o id correto para sobrescrever o que veio da funcao
-                            atualizado.setAthleteId(id);
-                            boolean sucesso = arquivo.update(atualizado);
+                            boolean sucesso = arquivo.create(novo);
 
                             if (sucesso) {
-                                System.out.println("Registro atualizado com sucesso!");
+                                System.out.println("Novo jogador com ID " + novo.getAthleteId() + " cadastrado com sucesso!");
                             } else {
-                                System.out.println("Erro ao atualizar registro.");
+                                System.out.println("Erro ao cadastrar jogador.");
                             }
+                            break;
                         }
-                        break;
-                    }
-                    case 5: { // Delete
-                        System.out.println("\nEXCLUIR REGISTRO");
-                        System.out.print("Digite o ID do jogador a ser deletado: ");
-                        int id = sc.nextInt();
-                        sc.nextLine();
+                        case 4: { // Update
+                            System.out.println("\nATUALIZAR REGISTRO");
+                            System.out.print("Digite o ID do jogador a ser atualizado: ");
+                            int id = lerInt(sc);
 
-                        boolean sucesso = arquivo.delete(id);
-                        if (sucesso) {
-                            System.out.println("Registro excluído com sucesso!");
-                        } else {
-                            System.out.println("Erro: ID não encontrado ou já excluído.");
-                        }
-                        break;
-                    }
-
-                    case 6: { // Ordenação
-                        System.out.println("Digite a quantidade de arquivos que voce quer utilizar");
-                        int quantArq = sc.nextInt();
-                        System.out.println("Agora digite a quantidade de registros por blocos");
-                        int quantReg = sc.nextInt();
-                        double inicio = new Date().getTime();
-                        Ordenacao ordem = new Ordenacao(arquivo);
-                        ordem.gerarArq(quantArq, quantReg); // passando a quantidade de arquivo que o usario quer usar para intercalar
-                        double fim = new Date().getTime();
-                        double tempoExecucao = (fim - inicio) / 1000.0;
-
-                        System.out.println("A ordenação com " + quantArq + " arquivos durou " + tempoExecucao + "s");
-
-                        break;
-                    }
-
-                    case 7: {
-                        System.out.println("Comando entendido! Vamos gerar a lista invertida!");
-                        ListaInvertida lista = new ListaInvertida("./jogadores.db", ListaInvertida.Campo.NOME);
-                        double inicio = new Date().getTime();
-                        lista.gerar();
-                        double fim = new Date().getTime();
-                        double tempoGasto = (fim - inicio) / 1000.0;
-
-                        System.out.println("Lista Gerada! O tempo levado pelo código foi" + tempoGasto + "s! Escolha a quantidade de buscas que quer realizar");
-                        int quantBusca = sc.nextInt();
-                        for (int i = 0; i < quantBusca; i++) {
-                            double inicioBusca = new Date().getTime();
-                            System.out.println("Digite a  palavra que deseja ser buscada");
-                            String palavraBusca = sc.next();
-                            List<Jogador> regBusca = lista.buscar(palavraBusca);
-                            double fimBusca = new Date().getTime();
-                            double tempoBusca = (fimBusca - inicioBusca) / 1000.0;
-                            System.out.println("O tempo de busca foi  " + tempoBusca + "s e os resultados obtidos foram os seguintes: ");
-
-                            if (regBusca.isEmpty()) {
-                                System.out.println("Nenhum jogador encontrado com o termo informado.");
+                            Jogador existente = arquivo.read(id); //busca o jogador primeiro
+                            if (existente == null) {
+                                System.out.println("Jogador com ID " + id + " não foi encontrado.");
                             } else {
-                                for (Jogador jogadorEncontrado : regBusca) {
-                                    System.out.println(jogadorEncontrado.toString());
+                                System.out.println("Dados atuais: " + existente);
+                                System.out.println("\nInforme os novos dados:");
+                                Jogador atualizado = lerDadosDoTeclado(sc); //chama funcao para preencher os dados manualmente
+
+                                //reatribui manualmente o id correto para sobrescrever o que veio da funcao
+                                atualizado.setAthleteId(id);
+                                boolean sucesso = arquivo.update(atualizado);
+
+                                if (sucesso) {
+                                    System.out.println("Registro atualizado com sucesso!");
+                                } else {
+                                    System.out.println("Erro ao atualizar registro.");
                                 }
                             }
+                            break;
                         }
-                        break;
-                    }
-                    case 8:{
-                        System.out.println("Perfeito vamos criar o CRUD Indexado");
-                        double inicio = new Date().getTime();
-                        CrudIndexado novoCrud = new CrudIndexado();
-                        double fim = new Date().getTime();
-                        double tempoExecucao = (fim - inicio) / 1000;
-                        System.out.println("O CRUD Indexado foi gerado com sucesso!Em " + tempoExecucao + "s");
-                        boolean rodandoCrudIndexado = true;
+                        case 5: { // Delete
+                            System.out.println("\nEXCLUIR REGISTRO");
+                            System.out.print("Digite o ID do jogador a ser deletado: ");
+                            int id = lerInt(sc);
 
-                        while (rodandoCrudIndexado) {
-                            System.out.println("\n    CRUD INDEXADO (Árvore B)  ");
-                            System.out.println("1 - Ler registro por ID");
-                            System.out.println("2 - Criar novo registro");
-                            System.out.println("3 - Atualizar registro");
-                            System.out.println("4 - Deletar registro");
-                            System.out.println("0 - Voltar ao menu principal");
-                            System.out.print("Escolha uma opção: ");
-                            int opcaoCrud = sc.nextInt();
-                            sc.nextLine();
-                            switch (opcaoCrud) {
-                                case 1: { // Read
-                                    System.out.print("\nDigite o ID do jogador: ");
-                                    int id = sc.nextInt();
-                                    sc.nextLine();
-                                    Jogador j = novoCrud.read(id);
-                                    if (j != null) {
-                                        System.out.println(j);
-                                    } else {
-                                        System.out.println("Registro não encontrado.");
+                            boolean sucesso = arquivo.delete(id);
+                            if (sucesso) {
+                                System.out.println("Registro excluído com sucesso!");
+                            } else {
+                                System.out.println("Erro: ID não encontrado ou já excluído.");
+                            }
+                            break;
+                        }
+
+                        case 6: { // Ordenação
+                            System.out.print("Digite a quantidade de arquivos que voce quer utilizar (>= 2): ");
+                            int quantArq = lerInt(sc);
+                            System.out.print("Agora digite a quantidade de registros por blocos (>= 1): ");
+                            int quantReg = lerInt(sc);
+                            if (quantArq < 2 || quantReg < 1) {
+                                System.out.println("Valores inválidos: use pelo menos 2 arquivos e 1 registro por bloco.");
+                                break;
+                            }
+                            double inicio = new Date().getTime();
+                            Ordenacao ordem = new Ordenacao(arquivo);
+                            ordem.gerarArq(quantArq, quantReg); // passando a quantidade de arquivo que o usario quer usar para intercalar
+                            double fim = new Date().getTime();
+                            double tempoExecucao = (fim - inicio) / 1000.0;
+
+                            System.out.println("A ordenação com " + quantArq + " arquivos durou " + tempoExecucao + "s");
+
+                            break;
+                        }
+
+                        case 7: {
+                            System.out.println("Comando entendido! Vamos gerar a lista invertida!");
+                            ListaInvertida lista = new ListaInvertida(ArquivoJogador.ARQUIVO_DADOS, ListaInvertida.Campo.NOME);
+                            double inicio = new Date().getTime();
+                            lista.gerar();
+                            double fim = new Date().getTime();
+                            double tempoGasto = (fim - inicio) / 1000.0;
+
+                            System.out.println("Lista Gerada! O tempo levado pelo código foi " + tempoGasto + "s! Escolha a quantidade de buscas que quer realizar");
+                            int quantBusca = lerInt(sc);
+                            for (int i = 0; i < quantBusca; i++) {
+                                double inicioBusca = new Date().getTime();
+                                System.out.println("Digite a  palavra que deseja ser buscada");
+                                String palavraBusca = sc.nextLine().trim(); // linha inteira: o termo é o nome completo, pode ter espaços
+                                List<Jogador> regBusca = lista.buscar(palavraBusca);
+                                double fimBusca = new Date().getTime();
+                                double tempoBusca = (fimBusca - inicioBusca) / 1000.0;
+                                System.out.println("O tempo de busca foi  " + tempoBusca + "s e os resultados obtidos foram os seguintes: ");
+
+                                if (regBusca.isEmpty()) {
+                                    System.out.println("Nenhum jogador encontrado com o termo informado.");
+                                } else {
+                                    for (Jogador jogadorEncontrado : regBusca) {
+                                        System.out.println(jogadorEncontrado.toString());
                                     }
-                                    break;
                                 }
-                                case 2: { // Create
-                                    System.out.println("\nNOVO CADASTRO");
-                                    Jogador novo = lerDadosDoTeclado(sc); //chama funcao para preencher os dados manualmente
-                                    boolean sucesso = novoCrud.create(novo);
+                            }
+                            break;
+                        }
+                        case 8:{
+                            System.out.println("Perfeito vamos criar o CRUD Indexado");
+                            double inicio = new Date().getTime();
+                            CrudIndexado novoCrud = new CrudIndexado();
+                            double fim = new Date().getTime();
+                            double tempoExecucao = (fim - inicio) / 1000;
+                            System.out.println("O CRUD Indexado foi gerado com sucesso!Em " + tempoExecucao + "s");
+                            boolean rodandoCrudIndexado = true;
 
-                                    if (sucesso) {
-                                        System.out.println("Novo jogador com ID " + novo.getAthleteId() + " cadastrado com sucesso!");
-                                    } else {
-                                        System.out.println("Erro ao cadastrar jogador.");
+                            while (rodandoCrudIndexado) {
+                                System.out.println("\n    CRUD INDEXADO (Árvore B)  ");
+                                System.out.println("1 - Ler registro por ID");
+                                System.out.println("2 - Criar novo registro");
+                                System.out.println("3 - Atualizar registro");
+                                System.out.println("4 - Deletar registro");
+                                System.out.println("0 - Voltar ao menu principal");
+                                System.out.print("Escolha uma opção: ");
+                                int opcaoCrud = lerInt(sc);
+                                switch (opcaoCrud) {
+                                    case 1: { // Read
+                                        System.out.print("\nDigite o ID do jogador: ");
+                                        int id = lerInt(sc);
+                                        Jogador j = novoCrud.read(id);
+                                        if (j != null) {
+                                            System.out.println(j);
+                                        } else {
+                                            System.out.println("Registro não encontrado.");
+                                        }
+                                        break;
                                     }
-                                    break;
-                                }
-                                case 3: { // Update
-                                    System.out.println("\nATUALIZAR REGISTRO");
-                                    System.out.print("Digite o ID do jogador a ser atualizado: ");
-                                    int id = sc.nextInt();
-                                    sc.nextLine();
-                                    Jogador existente = novoCrud.read(id); //busca o jogador primeiro
-
-                                    if (existente == null) {
-                                        System.out.println("Jogador com ID " + id + " não foi encontrado.");
-                                    } else {
-                                        System.out.println("Dados atuais: " + existente);
-                                        System.out.println("\nInforme os novos dados:");
-                                        Jogador atualizado = lerDadosDoTeclado(sc); //chama funcao para preencher os dados manualmente
-                                        atualizado.setAthleteId(id);//reatribui manualmente o id correto para sobrescrever o que veio da funcao
-                                        boolean sucesso = novoCrud.update(atualizado);
+                                    case 2: { // Create
+                                        System.out.println("\nNOVO CADASTRO");
+                                        Jogador novo = lerDadosDoTeclado(sc); //chama funcao para preencher os dados manualmente
+                                        boolean sucesso = novoCrud.create(novo);
 
                                         if (sucesso) {
-                                            System.out.println("Registro atualizado com sucesso!");
+                                            System.out.println("Novo jogador com ID " + novo.getAthleteId() + " cadastrado com sucesso!");
                                         } else {
-                                            System.out.println("Erro ao atualizar registro.");
+                                            System.out.println("Erro ao cadastrar jogador.");
                                         }
+                                        break;
                                     }
-                                    break;
-                                }
-                                case 4: { // Delete
-                                    System.out.println("\nEXCLUIR REGISTRO");
-                                    System.out.print("Digite o ID do jogador a ser deletado: ");
-                                    int id = sc.nextInt();
-                                    sc.nextLine();
-                                    boolean sucesso = novoCrud.delete(id);
-                                    if (sucesso) {
-                                        System.out.println("Registro excluído com sucesso!");
-                                    } else {
-                                        System.out.println("Erro: ID não encontrado ou já excluído.");
+                                    case 3: { // Update
+                                        System.out.println("\nATUALIZAR REGISTRO");
+                                        System.out.print("Digite o ID do jogador a ser atualizado: ");
+                                        int id = lerInt(sc);
+                                        Jogador existente = novoCrud.read(id); //busca o jogador primeiro
+
+                                        if (existente == null) {
+                                            System.out.println("Jogador com ID " + id + " não foi encontrado.");
+                                        } else {
+                                            System.out.println("Dados atuais: " + existente);
+                                            System.out.println("\nInforme os novos dados:");
+                                            Jogador atualizado = lerDadosDoTeclado(sc); //chama funcao para preencher os dados manualmente
+                                            atualizado.setAthleteId(id);//reatribui manualmente o id correto para sobrescrever o que veio da funcao
+                                            boolean sucesso = novoCrud.update(atualizado);
+
+                                            if (sucesso) {
+                                                System.out.println("Registro atualizado com sucesso!");
+                                            } else {
+                                                System.out.println("Erro ao atualizar registro.");
+                                            }
+                                        }
+                                        break;
                                     }
-                                    break;
+                                    case 4: { // Delete
+                                        System.out.println("\nEXCLUIR REGISTRO");
+                                        System.out.print("Digite o ID do jogador a ser deletado: ");
+                                        int id = lerInt(sc);
+                                        boolean sucesso = novoCrud.delete(id);
+                                        if (sucesso) {
+                                            System.out.println("Registro excluído com sucesso!");
+                                        } else {
+                                            System.out.println("Erro: ID não encontrado ou já excluído.");
+                                        }
+                                        break;
+                                    }
+                                    case 0: {
+                                        rodandoCrudIndexado = false;
+                                        break;
+                                    }
+                                    default:
+                                        System.out.println("Opção inválida! Tente novamente.");
+                                        break;
                                 }
-                                case 0: {
-                                    rodandoCrudIndexado = false;
-                                    break;
-                                }
-                                default:
-                                    System.out.println("Opção inválida! Tente novamente.");
-                                    break;
                             }
+                            novoCrud.fechar();
+                            System.out.println("Saindo do CRUD indexado...");
+                            break;
                         }
-                        novoCrud.fechar();
-                        System.out.println("Saindo do CRUD indexado...");
-                        break;
-                }
-                    case 0: {
-                        System.out.println("Encerrando aplicação...");
-                        rodando = false;
-                        break;
+                        case 0: {
+                            System.out.println("Encerrando aplicação...");
+                            rodando = false;
+                            break;
+                        }
+                        default:
+                            System.out.println("Opção inválida! Tente novamente.");
+                            break;
                     }
-                    default:
-                        System.out.println("Opção inválida! Tente novamente.");
-                        break;
+                } catch (Exception e) { // erro numa opção não encerra o programa
+                    System.out.println("Erro: " + e.getMessage());
                 }
             }
 
@@ -268,6 +271,18 @@ public class Main {
         } catch (Exception e) {
             System.out.println("Erro de execução: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    // le um inteiro do teclado; repete a pergunta enquanto a entrada nao for numerica
+    private static int lerInt(Scanner sc) {
+        while (true) {
+            String linha = sc.nextLine().trim();
+            try {
+                return Integer.parseInt(linha);
+            } catch (NumberFormatException e) {
+                System.out.print("Entrada inválida. Digite um número inteiro: ");
+            }
         }
     }
 

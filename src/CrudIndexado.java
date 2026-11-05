@@ -2,8 +2,9 @@ import java.io.*;
 
 public class CrudIndexado {
 
-    private final String nomeArquivo = "../jogadores.db";
-    private final String nomeIndice = "indice_id.idx"; // indice (arvore B): athleteId -> posicao no jogadores.db
+    private final String nomeArquivo = ArquivoJogador.ARQUIVO_DADOS; // mesmo arquivo do ArquivoJogador
+    private static final String nomeIndice = "indice_id.idx";
+    private static final String marcaIndice = "indice_id.ok"; // existe só enquanto o índice reflete o jogadores.db // indice (arvore B): athleteId -> posicao no jogadores.db
     private static final int ordemArvore = 64; // ordem da arvore B usada como indice primario
     private RandomAccessFile raf;
     private ArvoreB indice;
@@ -16,9 +17,34 @@ public class CrudIndexado {
             raf.seek(0);
             raf.writeInt(0);
         }
+        // reaproveita o indice gravado se ele ainda reflete o jogadores.db; senao reconstroi
+        boolean valido = indiceValido(raf.length());
         this.indice = new ArvoreB(nomeIndice, ordemArvore);
-        construirIndice();
+        invalidarIndice(); // enquanto aberto (e sem fechar corretamente) o indice nao e confiavel
+        if (!valido) {
+            construirIndice();
+        }
     }
+    // ---- controle de validade do índice (tamanho do .db gravado no último fechamento correto) ----
+    public static void invalidarIndice() { new File(marcaIndice).delete(); }
+
+    private static boolean indiceValido(long tamanhoDados) {
+        try {
+            return new File(nomeIndice).exists()
+                    && Long.parseLong(java.nio.file.Files.readString(java.nio.file.Paths.get(marcaIndice)).trim()) == tamanhoDados;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static void marcarIndice(long tamanhoDados) {
+        try {
+            java.nio.file.Files.writeString(java.nio.file.Paths.get(marcaIndice), Long.toString(tamanhoDados));
+        } catch (Exception e) {
+            // sem a marca o índice apenas será reconstruído na próxima vez
+        }
+    }
+
     public void construirIndice() throws IOException { // varre o jogadores.db e cria as entradas no indice
         indice.limpar();
         raf.seek(4); // pula o cabeçalho
@@ -56,6 +82,7 @@ public class CrudIndexado {
             raf.write(bytes);
             indice.inserir(novoId, posRegistro); // indexa o novo registro pelo athleteId
 
+            ListaInvertida.invalidarLista(); // a lista invertida precisa refletir a alteracao
             return true;
 
         } catch (Exception e) {
@@ -125,6 +152,7 @@ public class CrudIndexado {
 
                 indice.inserir(novoJogador.getAthleteId(), novaPosicao); // atualiza (upsert) a posição no indice
             }
+            ListaInvertida.invalidarLista();
             return true;
 
         } catch (Exception e) {
@@ -152,6 +180,7 @@ public class CrudIndexado {
 
             indice.remover(idProcurado); //chama o remover() da arvore b
 
+            ListaInvertida.invalidarLista();
             return true;
 
         } catch (Exception e) {
@@ -161,7 +190,9 @@ public class CrudIndexado {
     }
 
     public void fechar() throws IOException {
-        if (raf != null) raf.close();
+        long tamanho = raf.length();
         if (indice != null) indice.fechar();
+        if (raf != null) raf.close();
+        marcarIndice(tamanho); // indice consistente com o jogadores.db: pode ser reaproveitado
     }
 }

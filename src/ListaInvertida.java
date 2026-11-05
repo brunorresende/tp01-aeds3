@@ -6,6 +6,9 @@ import java.util.*;
 public class ListaInvertida {
     public enum Campo { NOME, POSICAO } // define em quais campos podem ser indexados
 
+    private static final String marcaLista = "lista_nome.ok"; // existe só enquanto a lista reflete o jogadores.db
+    public static void invalidarLista() { new File(marcaLista).delete(); }
+
     private String arquivoDados;
     private String arquivoChaves;
     private String arquivoListas;
@@ -60,6 +63,7 @@ public class ListaInvertida {
         }
 
         gravarIndicesNoDisco(dicionario);
+        try { java.nio.file.Files.writeString(java.nio.file.Paths.get(marcaLista), "ok"); } catch (IOException e) { /* será regerada na próxima busca */ } // lista em dia com o arquivo de dados
     }
 
     private void gravarIndicesNoDisco(TreeMap<String, List<Long>> dicionario) throws IOException {
@@ -85,6 +89,10 @@ public class ListaInvertida {
     }
 
     public List<Jogador> buscar(String termoBusca) throws Exception {
+        // se o arquivo de dados mudou desde a ultima geracao (CRUD), regera antes de buscar
+        if (!new File(marcaLista).exists() || !new File(arquivoChaves).exists() || !new File(arquivoListas).exists()) {
+            gerar();
+        }
         List<Jogador> resultados = new ArrayList<>();
         String chaveBuscada = normalizarString(termoBusca);
 

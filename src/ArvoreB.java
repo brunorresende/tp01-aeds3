@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class ArvoreB {
@@ -12,8 +13,8 @@ public class ArvoreB {
     private static final int TAMANHO_CABECALHO = 8; // um long guardando o offset da raiz
 
     public ArvoreB(String arquivoIndice, int ordem) throws IOException {
-        if (ordem < 3) {
-            throw new IllegalArgumentException("A ordem da arvore B deve ser >= 3.");
+        if (ordem < 4) { // com ordem 3 o grau minimo vira 1 e a remocao quebra
+            throw new IllegalArgumentException("A ordem da arvore B deve ser >= 4.");
         }
         this.ordem = ordem;
         this.raf = new RandomAccessFile(arquivoIndice, "rw");
@@ -60,18 +61,23 @@ public class ArvoreB {
 
     //Carrega um nó da árvore que está salvo no arquivo para a memória RAM.
     private No lerNo(long offset) throws IOException {
-        raf.seek(offset);   //move o ponteiro do arquivo para a posição do nó
-        No no = new No(raf.readByte() == 1);    //lê o tipo do nó (1 para folha ou 0 para interno)
+        // le o no inteiro com uma unica chamada ao disco e interpreta em memoria
+        byte[] buf = new byte[tamanhoNoEmBytes()];
+        raf.seek(offset);
+        raf.readFully(buf);
+        ByteBuffer bb = ByteBuffer.wrap(buf);
+
+        No no = new No(bb.get() == 1);  //tipo do nó (1 para folha ou 0 para interno)
         no.offsetNoArquivo = offset;    //armazena o offset do próprio nó na memória
-        no.numChaves = raf.readInt();   //lê quantas chaves estão ativas no nó
-        //lê os pares (chave, posicao no arquivo de dados)
+        no.numChaves = bb.getInt();     //quantas chaves estão ativas no nó
+        //pares (chave, posicao no arquivo de dados)
         for (int i = 0; i < ordem - 1; i++) {
-            no.chaves[i] = raf.readInt();
-            no.posicoes[i] = raf.readLong();
+            no.chaves[i] = bb.getInt();
+            no.posicoes[i] = bb.getLong();
         }
-        //lê os ponteiros (offsets) para os nós filhos
+        //ponteiros (offsets) para os nós filhos
         for (int i = 0; i < ordem; i++) {
-            no.filhos[i] = raf.readLong();
+            no.filhos[i] = bb.getLong();
         }
         return no;
     }
@@ -81,19 +87,19 @@ public class ArvoreB {
             // no novo: aloca espaco sempre no final do arquivo
             no.offsetNoArquivo = raf.length();
         }
-        raf.seek(no.offsetNoArquivo);   //Move para a posicao onde o nó deve ser escrito
-        raf.writeByte(no.folha ? 1 : 0);    //1 se for folha, 0 se nao
-        raf.writeInt(no.numChaves);     //salva a quantidade atual de chaves
-
-        //grava todas as chaves e suas posições associadas
+        // monta o no inteiro em memoria e grava com uma unica chamada
+        ByteBuffer bb = ByteBuffer.allocate(tamanhoNoEmBytes());
+        bb.put((byte) (no.folha ? 1 : 0));
+        bb.putInt(no.numChaves);
         for (int i = 0; i < ordem - 1; i++) {
-            raf.writeInt(no.chaves[i]);
-            raf.writeLong(no.posicoes[i]);
+            bb.putInt(no.chaves[i]);
+            bb.putLong(no.posicoes[i]);
         }
-        //grava os offsets para os nós filhos
         for (int i = 0; i < ordem; i++) {
-            raf.writeLong(no.filhos[i]);
+            bb.putLong(no.filhos[i]);
         }
+        raf.seek(no.offsetNoArquivo);
+        raf.write(bb.array());
     }
 
     private void atualizarRaiz(long novoOffset) throws IOException {
