@@ -27,6 +27,7 @@ public class Main {
                 System.out.println("8 - Gerar CRUD Indexado");
                 System.out.println("9 - Compactar base de dados (Huffman e LZW)");
                 System.out.println("10 - Descompactar base de dados");
+                System.out.println("11 - Buscar Padrão (KMP e Boyer-Moore)");
                 System.out.println("0 - Sair");
                 System.out.print("Escolha uma opção: ");
 
@@ -271,6 +272,10 @@ public class Main {
                                 CrudIndexado.invalidarIndice();
                                 ListaInvertida.invalidarLista();
                             }
+                            break;
+                        }
+                        case 11: { // Casamento de padrões (KMP e Boyer-Moore)
+                            CasamentoPadrao.opcaoMenu(sc, ArquivoJogador.ARQUIVO_DADOS);
                             break;
                         }
                         case 0: {
