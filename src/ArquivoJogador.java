@@ -3,7 +3,10 @@ import java.time.LocalDate;
 
 
 public class ArquivoJogador {
-    private String NOME_ARQUIVO = "jogadores.db";
+    // caminhos únicos usados por todas as classes (executar a partir de src/, como no README)
+    public static final String ARQUIVO_DADOS = "jogadores.db";
+    public static final String CSV = "../players-selected-columns 2.csv";
+    private final String NOME_ARQUIVO = ARQUIVO_DADOS;
     private long ponteiroLeituraOrdenacao = 4; // começa depois do cabeçalho
     private RandomAccessFile raf;
 
@@ -11,20 +14,26 @@ public class ArquivoJogador {
     private final byte LAPIDE_ATIVO = (byte) ' ';
     private final byte LAPIDE_EXCLUIDO = (byte) '*';
 
-    public ArquivoJogador() throws FileNotFoundException {
+    public ArquivoJogador() throws IOException {
         //abrir arquivo no modo de leitura e escrita
         this.raf = new RandomAccessFile(NOME_ARQUIVO, "rw");
+        // arquivo novo (ou truncado): grava o cabeçalho com o último ID = 0
+        if (raf.length() < 4) {
+            raf.setLength(0);
+            raf.writeInt(0);
+        }
     }
 
     //  CARREGA A BASE DE DADOS
 
-    public void realizarCargaCSV(String caminhoCSV){
-        try {
+    // retorna true somente se a carga terminou; em caso de erro a base existente é preservada
+    public boolean realizarCargaCSV(String caminhoCSV){
+        // abre o CSV ANTES de apagar a base: se não existir, nada é destruído
+        try (BufferedReader br = new BufferedReader(new FileReader(caminhoCSV))) {
+
+            String linha = br.readLine(); // pula o cabeçalho do CSV
 
             raf.setLength(0); // reinicia a base de dados
-
-            BufferedReader br = new BufferedReader(new FileReader(caminhoCSV));
-            String linha = br.readLine(); // pula o cabeçalho do CSV
 
             // salva os 4 primeiros bytes para armazenar o último ID no arquivo
             raf.seek(0);
@@ -32,51 +41,50 @@ public class ArquivoJogador {
 
             int proximoID = 0; // contador usado para gerar ID sequenciais na carga
 
-            while ((linha = br.readLine()) != null) {
-                // o parâmetro -1 garante a leitura de colunas vazias no final da linha
-                String[] dados = linha.split(",", -1);
+            try {
+                while ((linha = br.readLine()) != null) {
+                    if (linha.trim().isEmpty()) continue; // ignora linhas em branco
 
-                //  ID gerado sequencialmente no momento da carga (ignora o ID original do CSV)
-                proximoID++;
-                int id = proximoID;
+                    // o parâmetro -1 garante a leitura de colunas vazias no final da linha
+                    String[] dados = linha.split(",", -1);
 
-                //  Nome
-                String nome = dados[1]; //Salva o nome
+                    //  ID gerado sequencialmente no momento da carga (ignora o ID original do CSV)
+                    proximoID++;
+                    int id = proximoID;
 
-                //  Slug
-                String slug = dados[2]; // String com separador "-" definido
+                    String nome = dados[1];    // Nome
+                    String slug = dados[2];    // String com separador "-" definido
+                    String posicao = dados[3]; // Posição
 
-                //  Posição
-                String posicao = dados[3];
+                    //  Data (formato ISO (AAAA-MM-DD))
+                    LocalDate data = null;
+                    if (!dados[4].isEmpty()) {
+                        String apenasData = dados[4].split(" ")[0]; // descartando componente de hora
+                        data = LocalDate.parse(apenasData);
+                    }
 
-                //  Data (formato ISO (AAAA-MM-DD))
-                LocalDate data = null;
-                if (!dados[4].isEmpty()) {
-                    String apenasData = dados[4].split(" ")[0]; // descartando componente de hora
-                    data = LocalDate.parse(apenasData);
+                    // serializa o objeto em array de bytes
+                    Jogador jogador = new Jogador(id, nome, slug, posicao, data);
+                    byte[] vetorBytes = jogador.toByteArray();
+
+                    // gravação do registro
+                    raf.writeByte(LAPIDE_ATIVO);    // lápide (1B)
+                    raf.writeInt(vetorBytes.length);    // indicador de tamanho em bytes (4B)
+                    raf.write(vetorBytes);  // vetor de bytes do objeto (NB)
                 }
-
-                // serializa o objeto em array de bytes
-                Jogador jogador = new Jogador(id, nome, slug, posicao, data);
-                byte[] vetorBytes = jogador.toByteArray();
-
-
-                // gravação do registro
-                raf.writeByte(LAPIDE_ATIVO);    // lápide (1B)
-                raf.writeInt(vetorBytes.length);    // indicador de tamanho em bytes (4B)
-                raf.write(vetorBytes);  // vetor de bytes do objeto (NB)
-
-
+            } finally {
+                // grava o cabeçalho mesmo se uma linha falhar no meio, para não repetir IDs depois
+                long fim = raf.getFilePointer();
+                raf.seek(0);
+                raf.writeInt(proximoID);
+                raf.seek(fim);
             }
-            br.close();
-
-            // atualiza o cabeçalho no byte zero com o maior ID encontrado
-            raf.seek(0);
-            raf.writeInt(proximoID); // como ele esta criando o ID sozinho, usa esse valor para atualizar
+            invalidarIndices(); // índices antigos não valem mais
+            return true;
 
         } catch (Exception e) {
             System.out.println("Erro ao carregar CSV: " + e.getMessage());
-            e.printStackTrace();
+            return false;
         }
     }
 
@@ -105,6 +113,7 @@ public class ArquivoJogador {
             raf.writeInt(bytes.length);
             raf.write(bytes);
 
+            invalidarIndices();
             return true;
 
         } catch (Exception e) {
@@ -175,6 +184,7 @@ public class ArquivoJogador {
                     if (j.getAthleteId() == idProcurado) {
                         raf.seek(posRegistro); // reposiciona o ponteiro no byte da lápide
                         raf.writeByte(LAPIDE_EXCLUIDO); // marca com '*'
+                        invalidarIndices();
                         return true;
                     }
                 } else {
@@ -223,6 +233,7 @@ public class ArquivoJogador {
                             raf.writeInt(novosBytes.length);
                             raf.write(novosBytes);
                         }
+                        invalidarIndices();
                         return true;
                     }
                 } else {
@@ -230,7 +241,7 @@ public class ArquivoJogador {
                 }
             }
         } catch (Exception e) {
-        System.out.println("Erro ao atualizar: " + e.getMessage());
+            System.out.println("Erro ao atualizar: " + e.getMessage());
         }
         return false;
     }
@@ -261,6 +272,12 @@ public class ArquivoJogador {
         }
 
         return null; // chegou ao fim do arquivo
+    }
+
+    // alterações feitas fora do índice: Árvore B e lista invertida precisam ser refeitas
+    private void invalidarIndices() {
+        CrudIndexado.invalidarIndice();
+        ListaInvertida.invalidarLista();
     }
 
     public void fechar() throws IOException {
