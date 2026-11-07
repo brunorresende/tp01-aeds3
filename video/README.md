@@ -6,3 +6,6 @@ https://youtu.be/00yNoia08TA
 ### Vídeo de Explicação TP02
 https://youtu.be/wcUiVFVo5s0
 
+### Vídeo de Explicação TP03
+https://youtu.be/rG0KP0k6QHU
+
